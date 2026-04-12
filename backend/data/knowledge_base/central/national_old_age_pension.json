@@ -1,0 +1,12 @@
+{
+  "policy_id": "CENT-NOAP-001",
+  "scheme_name": "National Old Age Pension",
+  "category": "Social Security",
+  "description": "Pension support for senior citizens from low-income families.",
+  "benefit": "Monthly pension assistance",
+  "eligibility_criteria": {
+    "required_states": ["all"],
+    "min_age": 60,
+    "bpl_status": true
+  }
+}

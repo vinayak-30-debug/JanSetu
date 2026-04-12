@@ -1,0 +1,8 @@
+{
+    "scheme_name": "HIMCARE",
+    "category": "Health Insurance",
+    "benefit": "Health insurance",
+    "eligibility": [
+        "Residents not covered under PMJAY"
+    ]
+}

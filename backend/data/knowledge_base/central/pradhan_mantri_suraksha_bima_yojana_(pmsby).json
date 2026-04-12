@@ -1,0 +1,14 @@
+{
+    "scheme_name": "PRADHAN MANTRI SURAKSHA BIMA YOJANA (PMSBY)",
+    "category": "Insurance",
+    "benefit": {
+        "Death": "Rs. 2 Lakh",
+        "Total and irrecoverable loss of both eyes or loss of use of both hands or feet or loss of sight of one eye and loss of use of hand or foot": "Rs. 2 Lakh",
+        "Total and irrecoverable loss of sight of one eye or loss of use of one hand or foot": "Rs. 1 Lakh"
+    },
+    "eligibility": [
+        "All individual (single or joint) account holders of participating banks / Post office",
+        "Age group of 18 to 70 years",
+        "Eligible to join through one bank / Post office account only, even with multiple accounts"
+    ]
+}

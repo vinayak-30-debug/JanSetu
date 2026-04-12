@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BBN - Simple Execution Guide</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f4f7f6;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 25px;
+        }
+
+        h1,
+        h2 {
+            color: #0f766e;
+        }
+
+        .step {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .step-num {
+            background: #0f766e;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            flex-shrink: 0;
+            font-weight: bold;
+        }
+
+        .file-box {
+            border-left: 4px solid #0f766e;
+            background: #f0fdfa;
+            padding: 10px 15px;
+            margin: 10px 0;
+            border-radius: 0 5px 5px 0;
+            font-family: monospace;
+        }
+
+        .highlight {
+            font-weight: bold;
+            color: #0f766e;
+        }
+
+        .mermaid {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>🚀 BBN Execution Guide (Step-by-Step)</h1>
+    <p>A simple breakdown of how the <strong>Bharat Benefits Navigator</strong> actually runs from start to finish.</p>
+
+    <div class="card">
+        <h2>1. The Execution Flow (Visual)</h2>
+        <div class="mermaid">
+            graph TD
+            A[User Query] -->|1. Request| B(app/main.py)
+            B -->|2. Route| C(app/api/v1/endpoints.py)
+            C -->|3. Trigger| D(app/orchestration/orchestrator.py)
+
+            subgraph "Agents in Action"
+            D -->|4. Search| E[app/utils/rag_retriever.py]
+            D -->|5. Match| F[app/agents/eligibility_agent.py]
+            D -->|6. Score| G[app/decision/decision_engine.py]
+            D -->|7. Talk| H[app/agents/explanation_agent.py]
+            end
+
+            H -->|8. Final Response| D
+            D -->|9. JSON Output| A
+
+            style D fill:#0f766e,color:#fff
+            style A fill:#f59e0b,color:#fff
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>2. File-by-File Breakdown</h2>
+
+        <div class="step">
+            <div class="step-num">1</div>
+            <div>
+                <span class="highlight">The Gateway</span>
+                <div class="file-box">backend/app/main.py</div>
+                <p>This is the front door. It starts the Uvicorn server and tells FastAPI to listen for requests. It
+                    also connects to MongoDB as soon as the app starts.</p>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-num">2</div>
+            <div>
+                <span class="highlight">The API Routes</span>
+                <div class="file-box">backend/app/api/v1/endpoints.py</div>
+                <p>Think of this as the traffic police. When a user sends a query to <code>/api/v1/query</code>, this
+                    file receives it and hands it over to the <strong>Orchestrator</strong>.</p>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-num">3</div>
+            <div>
+                <span class="highlight">The Brain (Orchestrator)</span>
+                <div class="file-box">backend/app/orchestration/orchestrator.py</div>
+                <p>The most important file. It manages the whole conversation. It calls the search engine, then the
+                    rules engine, then the AI explainer in the right order.</p>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-num">4</div>
+            <div>
+                <span class="highlight">The Search Engine</span>
+                <div class="file-box">backend/app/utils/rag_retriever.py</div>
+                <p>This looks through all your 90+ JSON scheme files. It uses AI (Vector Search) to find the schemes
+                    that actually match what the user is talking about.</p>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-num">5</div>
+            <div>
+                <span class="highlight">The Rule Matcher</span>
+                <div class="file-box">backend/app/agents/eligibility_agent.py</div>
+                <p>This doesn't use AI—it uses logic. It checks: <em>"Is the user's age > 60?"</em> or <em>"Is their
+                        income < 2 Lakhs?"</em>. It gives a simple Yes/No for every scheme found.</p>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-num">6</div>
+            <div>
+                <span class="highlight">The Smart Explainer</span>
+                <div class="file-box">backend/app/agents/explanation_agent.py</div>
+                <p>This is the Gemini AI. It takes raw data and turns it into a friendly message like <em>"Namaste!
+                        Since you are a farmer in Telangana, you are eligible for..."</em></p>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-num">7</div>
+            <div>
+                <span class="highlight">The Helper (Decision Layer)</span>
+                <div class="file-box">backend/app/decision/decision_engine.py</div>
+                <p>This handles the extra info. It calculates the 85% success probability and checks which documents
+                    (Aadhaar, etc.) the user is still missing.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="card">
+        <h2>🛠️ Simple Execution Step</h2>
+        <p>To run everything we've built, follow these 3 steps in your terminal:</p>
+        <ol>
+            <li><strong>Activate:</strong> <code>.\venv\Scripts\Activate.ps1</code></li>
+            <li><strong>Ingest Data:</strong> <code>python -m backend.app.utils.bulk_processor</code> (Already done!)
+            </li>
+            <li><strong>Launch:</strong> <code>python -m backend.app.main</code></li>
+        </ol>
+        <p>Success! Your "Brain" is now alive at <code>localhost:8000</code>.</p>
+    </div>
+
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'forest' });
+    </script>
+</body>
+
+</html>

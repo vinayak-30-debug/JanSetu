@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+motor
+pydantic-settings
+python-dotenv
+firebase-admin
+openai
+google-generativeai
+faiss-cpu
+sentence-transformers
+numpy
+twilio

@@ -1,0 +1,10 @@
+{
+    "scheme_name": "Pradhan Mantri Jan Arogya Yojana (PMJAY)",
+    "category": "Health",
+    "benefit": "\u20b95 lakh health insurance per family per year",
+    "eligibility": [
+        "SECC 2011 listed families",
+        "BPL households",
+        "Identified vulnerable categories"
+    ]
+}

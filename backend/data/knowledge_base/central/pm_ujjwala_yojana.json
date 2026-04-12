@@ -1,0 +1,13 @@
+{
+  "policy_id": "CENT-PSUY-001",
+  "scheme_name": "PM Ujjwala Yojana",
+  "category": "Energy",
+  "description": "LPG connection support for eligible low-income households.",
+  "benefit": "Subsidized LPG connection",
+  "eligibility_criteria": {
+    "required_states": ["all"],
+    "gender": "Female",
+    "bpl_status": true,
+    "no_lpg_connection": true
+  }
+}

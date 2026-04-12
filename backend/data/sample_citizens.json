@@ -1,0 +1,53 @@
+[
+    {
+        "user_id": "citizen_001",
+        "name": "Rohit Kumar",
+        "email": "rohit@example.com",
+        "phone": "+91 9876543210",
+        "age": 32,
+        "income": 45000,
+        "occupation": "farmer",
+        "state": "Telangana",
+        "ration_card": true,
+        "enrolled_schemes": [],
+        "uploaded_documents": [
+            "Aadhar Card",
+            "Bank Account Details"
+        ],
+        "is_complete": true
+    },
+    {
+        "user_id": "citizen_002",
+        "name": "Lakshmi Devi",
+        "email": "lakshmi@example.com",
+        "phone": "+91 8765432109",
+        "age": 65,
+        "income": 15000,
+        "occupation": "widow",
+        "state": "Andhra Pradesh",
+        "ration_card": true,
+        "enrolled_schemes": [],
+        "uploaded_documents": [
+            "Aadhar Card"
+        ],
+        "is_complete": true
+    },
+    {
+        "user_id": "citizen_003",
+        "name": "Anjali Sharma",
+        "email": "anjali@example.com",
+        "phone": "+91 7654321098",
+        "age": 20,
+        "income": 200000,
+        "occupation": "student",
+        "state": "Delhi",
+        "ration_card": false,
+        "enrolled_schemes": [],
+        "uploaded_documents": [
+            "Aadhar Card",
+            "Income Certificate",
+            "10th Marksheet"
+        ],
+        "is_complete": true
+    }
+]

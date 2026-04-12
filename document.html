@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bharat Benefits Navigator - Project Blueprint</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Fira+Code:wght@400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0f766e;
+            --secondary: #1e293b;
+            --accent: #f59e0b;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 40px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        header h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin: 0;
+            letter-spacing: -2px;
+        }
+
+        header p {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            margin-top: 10px;
+        }
+
+        .section-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+            margin-bottom: 40px;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--secondary);
+            margin-top: 0;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+        }
+
+        h2::before {
+            content: "";
+            display: inline-block;
+            width: 8px;
+            height: 30px;
+            background: var(--primary);
+            margin-right: 15px;
+            border-radius: 4px;
+        }
+
+        .mermaid-container {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 16px;
+            border: 1px solid #f1f5f9;
+            margin: 30px 0;
+            display: flex;
+            justify-content: center;
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.02);
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .definition-box {
+            background: #f1f5f9;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 5px solid var(--primary);
+        }
+
+        .definition-box h4 {
+            margin: 0 0 10px 0;
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+        .file-tree {
+            font-family: 'Fira Code', monospace;
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 25px;
+            border-radius: 16px;
+            font-size: 0.9rem;
+            overflow-x: auto;
+        }
+
+        .file-item {
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .file-name {
+            color: #38bdf8;
+            font-weight: 600;
+        }
+
+        .file-purpose {
+            color: #94a3b8;
+            margin-left: 10px;
+            font-style: italic;
+        }
+
+        .tech-tag {
+            display: inline-block;
+            background: rgba(15, 118, 110, 0.1);
+            color: var(--primary);
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-right: 8px;
+            margin-top: 5px;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .success-accent {
+            color: #10b981;
+            font-weight: 700;
+        }
+
+        .alert-accent {
+            color: #f59e0b;
+            font-weight: 700;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Bharat Benefits Navigator</h1>
+            <p>BBN Intelligence Engine: Comprehensive Technical Blueprint</p>
+        </header>
+
+        <!-- 1. Purpose of the Project -->
+        <div class="section-card">
+            <h2>1. Project Mission & Purpose</h2>
+            <p>Bharat Benefits Navigator (BBN) is an AI-driven welfare intelligence platform designed to bridge the gap
+                between government policies and the individual citizen. By leveraging <strong>Multi-Agent
+                    Orchestration</strong> and <strong>Retrieval-Augmented Generation (RAG)</strong>, BBN solves the
+                complexity of welfare discovery.</p>
+            <div class="grid-2">
+                <div class="definition-box">
+                    <h4>Empowering Discovery</h4>
+                    <p>Allowing users to find relevant schemes through natural, conversational language instead of
+                        complex forms.</p>
+                </div>
+                <div class="definition-box">
+                    <h4>Personalized Eligibility</h4>
+                    <p>Translating legal jargon into simple Yes/No matches based on a user's unique socio-economic
+                        profile.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. System Architecture -->
+        <div class="section-card">
+            <h2>2. Hybrid Multi-Agent Architecture</h2>
+            <p>The system is built on a "Sense-Recover-Decide" loop, where the Orchestrator facilitates communication
+                between specialized layers.</p>
+            <div class="mermaid-container">
+                <div class="mermaid">
+                    graph TB
+                    subgraph "A. User Interaction Layer"
+                    U[User App] --> I[Intent Extraction]
+                    I --> P[Profile Contextualization]
+                    end
+
+                    subgraph "B. Knowledge Synapse (RAG)"
+                    P --> FAISS[FAISS Vector Search]
+                    KB[(Policy Knowledge Base)] --> FAISS
+                    FAISS --> RC[Retrieved Context]
+                    end
+
+                    subgraph "C. Intelligence Core (Agents)"
+                    RC --> EA[Eligibility Agent]
+                    RC --> DA[Document Advisor]
+                    EA --> Match[Pass/Fail Logic]
+                    DA --> Score[Readiness %]
+                    end
+
+                    subgraph "D. Synthesis & Reasoning"
+                    Match --> OA[Orchestrator Aggregator]
+                    Score --> OA
+                    OA --> GR[Gemini Reasoning Engine]
+                    GR --> OUT[Final Multi-Lingual Insight]
+                    end
+
+                    classDef teal fill:#0f766e,color:#fff,stroke:#0d9488,stroke-width:2px;
+                    classDef blue fill:#1e293b,color:#fff,stroke:#334155,stroke-width:2px;
+                    classDef gold fill:#f59e0b,color:#fff,stroke:#d97706,stroke-width:2px;
+
+                    class U,I,P teal;
+                    class FAISS,KB,RC blue;
+                    class EA,DA,Match,Score gold;
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Key Definitions -->
+        <div class="section-card">
+            <h2>3. Key System Definitions</h2>
+            <div class="grid-2">
+                <div class="definition-box">
+                    <h4>RAG (Retrieval-Augmented Generation)</h4>
+                    <p>A mechanism that retrieves live policy documents from the database and "feeds" them to the AI to
+                        prevent hallucinations.</p>
+                </div>
+                <div class="definition-box">
+                    <h4>Vector Embedding</h4>
+                    <p>Converting human text into 384-dimensional math points using <code>all-MiniLM-L6-v2</code> to
+                        find matches by "meaning" rather than keyword.</p>
+                </div>
+                <div class="definition-box">
+                    <h4>Deterministic Logic</h4>
+                    <p>Hard-coded rules used by the Eligibility Agent to ensure 100% accuracy in checking age, income,
+                        and location criteria.</p>
+                </div>
+                <div class="definition-box">
+                    <h4>Socio-Economic Persona</h4>
+                    <p>A digital twin of the user containing their state, occupation, and documents used for
+                        cross-referencing benefits.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Internal Mechanics & Connection -->
+        <div class="section-card">
+            <h2>4. Backend Internal Mechanism</h2>
+            <p>The system execution follows a strict <strong>File-to-File Connection</strong> pipeline defined by the
+                Orchestrator.</p>
+
+            <div class="mermaid-container">
+                <div class="mermaid">
+                    sequenceDiagram
+                    participant API as app/main.py
+                    participant OC as orchestration/orchestrator.py
+                    participant RG as utils/rag_retriever.py
+                    participant EL as agents/eligibility_agent.py
+                    participant DE as decision/decision_engine.py
+                    participant LL as utils/llm_client.py
+
+                    API->>OC: 1. Trigger run_query()
+                    OC->>RG: 2. Invoke retrieve(query)
+                    RG-->>OC: Return matched policy JSONs
+
+                    par OC to Agents
+                    OC->>EL: 3a. Batch check rules
+                    OC->>DE: 3b. Optimize benefit value
+                    end
+
+                    OC->>LL: 4. Synthesize prompt with context
+                    LL-->>OC: Final empathetic summary
+                    OC-->>API: 5. Return JSON payload
+                </div>
+            </div>
+
+            <h3>File Matrix & Purpose</h3>
+            <div class="file-tree">
+                <span class="file-item"><span class="file-name">backend/app/main.py</span> — <span
+                        class="file-purpose">Entry Point; manages FastAPI lifecycle and MongoDB
+                        connection.</span></span>
+                <span class="file-item"><span class="file-name">orchestration/orchestrator.py</span> — <span
+                        class="file-purpose">The Nervous System; manages parallel agent calls and data
+                        flow.</span></span>
+                <span class="file-item"><span class="file-name">utils/rag_retriever.py</span> — <span
+                        class="file-purpose">The Scholar; performs FAISS vector search on policy knowledge
+                        base.</span></span>
+                <span class="file-item"><span class="file-name">agents/eligibility_agent.py</span> — <span
+                        class="file-purpose">The Judge; executes Boolean matching for scheme rules.</span></span>
+                <span class="file-item"><span class="file-name">decision/optimization_engine.py</span> — <span
+                        class="file-purpose">The Advisor; calculates maximum financial benefit and ranks
+                        results.</span></span>
+                <span class="file-item"><span class="file-name">utils/llm_client.py</span> — <span
+                        class="file-purpose">The Voice; interfaces with Gemini 1.5 for natural language
+                        output.</span></span>
+            </div>
+        </div>
+
+        <footer>
+            &copy; 2026 Bharat Benefits Navigator | Tier-1 AI Governance Implementation
+        </footer>
+    </div>
+
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,15 @@
+{
+    "scheme_name": "Ayushman Bharat – Pradhan Mantri Jan Arogya Yojana (AB-PM-JAY)",
+    "category": "Health",
+    "benefit": "Health insurance cover of Rs. 5 Lakh per family per year for hospital treatment.",
+    "eligibility": [
+        "Aadhar Card",
+        "Ration Card",
+        "Income Certificate"
+    ],
+    "application_process": [
+        "Visit nearest empanelled hospital",
+        "Show Aadhar or Ration card to Ayushman Mitra",
+        "Get pre-authorization"
+    ]
+}

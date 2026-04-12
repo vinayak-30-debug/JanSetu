@@ -1,0 +1,9 @@
+{
+    "scheme_name": "PMAY",
+    "category": "Housing",
+    "benefit": "Financial assistance for house construction",
+    "eligibility": [
+        "Age between 18 and 100 years",
+        "Annual income up to \u20b9600000"
+    ]
+}

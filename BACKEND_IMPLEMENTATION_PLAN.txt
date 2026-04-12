@@ -1,0 +1,553 @@
+================================================================================
+BHARAT BENEFITS NAVIGATOR (BBN)
+BACKEND IMPLEMENTATION PLAN - 24-HOUR HACKATHON
+================================================================================
+
+PROJECT: AI-Powered Welfare & Insurance Benefits Platform
+TIMELINE: 24 Hours (7 AM Sat - 7 AM Sun)
+TEAM FOCUS: Backend Architecture & Intelligence Layer
+
+================================================================================
+1. STRATEGIC APPROACH FOR 24-HOUR HACKATHON
+================================================================================
+
+PRINCIPLE: Realistic MVP Over Feature Completeness
+- Focus on 2 core agents (Eligibility + Policy Explanation)
+- Skeleton code for remaining agents (demonstrable but not functional)
+- Emphasis on working orchestration + smooth data flow
+- Polished core features > many half-built features
+
+PHASES:
+- Phase 0 (0-2 hrs): Project setup, environment, database
+- Phase 1 (2-6 hrs): Authentication & user profile system
+- Phase 2 (6-14 hrs): Core agents & orchestration engine
+- Phase 3 (14-22 hrs): API endpoints & integration testing
+- Phase 4 (22-24 hrs): Refinements & demo preparation
+
+================================================================================
+2. TECH STACK DECISIONS
+================================================================================
+
+BACKEND FRAMEWORK: FastAPI
+✓ Fast, async-ready, built-in async support
+✓ Auto-generated API documentation (Swagger)
+✓ Lightweight for 24-hr hackathon
+✓ Easy to add LLM integration
+
+DATABASE: MongoDB (with local instance or Atlas)
+✓ Flexible schema (policies, users, rules are semi-structured)
+✓ Quick to prototype
+✓ Easy to scale policy dataset
+
+LLM INTEGRATION: OpenAI GPT-3.5-turbo or Ollama (offline)
+✓ For policy explanation & conversational features
+✓ Use API keys or local LLM to avoid internet dependency
+
+ORCHESTRATION: Custom Python class with async task coordination
+✓ Simpler than Langchain for MVP
+✓ Full control over agent communication
+✓ Easier to demonstrate workflow
+
+AUTHENTICATION: Firebase Authentication
+✓ Seamless Google Sign-In integration
+✓ Handles session management and security (JWT)
+✓ Minimal backend logic required (verify ID token)
+✓ Free tier perfect for hackathon
+✓ Easy to mock or test during development
+
+DATABASE & RAG: MongoDB (Atlas)
+✓ Flexible schema for policy documents and user context
+✓ Supports Vector Search (for RAG) if needed
+✓ Decoupled from Auth (linked via Firebase UID)
+
+================================================================================
+3. PROJECT STRUCTURE
+================================================================================
+
+backend/
+├── app/
+│   ├── __init__.py
+│   ├── main.py                          # FastAPI app initialization
+│   ├── config.py                        # Configuration & environment
+│   ├── firebase_config.py               # Firebase Admin SDK setup
+│   ├── database.py                      # MongoDB connection
+│   │
+│   ├── auth/
+│   │   ├── __init__.py
+│   │   ├── models.py                    # User, Token schemas
+│   │   ├── services.py                  # Auth logic (JWT, OAuth)
+│   │   └── routes.py                    # /login, /register, /otp endpoints
+│   │
+│   ├── users/
+│   │   ├── __init__.py
+│   │   ├── models.py                    # User profile schema
+│   │   ├── services.py                  # Profile CRUD
+│   │   ├── schemas.py                   # Pydantic models
+│   │   └── routes.py                    # /profile endpoints
+│   │
+│   ├── policies/
+│   │   ├── __init__.py
+│   │   ├── models.py                    # Policy document schema
+│   │   ├── database.py                  # Policy seed data
+│   │   ├── services.py                  # Policy retrieval
+│   │   └── routes.py                    # /policies endpoints
+│   │
+│   ├── agents/
+│   │   ├── __init__.py
+│   │   ├── base_agent.py                # Base agent class
+│   │   ├── eligibility_agent.py         # Eligibility checking
+│   │   ├── explanation_agent.py         # Policy explanation (LLM)
+│   │   ├── guidance_agent.py            # Claim guidance (skeleton)
+│   │   ├── optimization_agent.py        # Benefit optimization (skeleton)
+│   │   └── voice_agent.py               # Voice processing (skeleton)
+│   │
+│   ├── orchestration/
+│   │   ├── __init__.py
+│   │   ├── orchestrator.py              # Central coordination engine
+│   │   ├── workflow.py                  # Workflow execution logic
+│   │   └── state_manager.py             # Session state management
+│   │
+│   └── api/
+│       ├── __init__.py
+│       ├── v1/
+│       │   ├── __init__.py
+│       │   ├── endpoints.py             # Main API endpoints
+│       │   └── schemas.py               # Request/response models
+│       └── middleware.py                # CORS, logging, error handling
+│
+├── data/
+│   ├── policies.json                    # Policy knowledge base
+│   ├── eligibility_rules.json           # Rule engine
+│   └── sample_data.py                   # Seed data functions
+│
+├── utils/
+│   ├── __init__.py
+│   ├── llm_client.py                    # LLM API wrapper
+│   ├── rag_retriever.py                 # RAG for policy search
+│   ├── validators.py                    # Input validation
+│   └── logging_config.py                # Logging setup
+│
+├── tests/
+│   ├── __init__.py
+│   ├── test_auth.py
+│   ├── test_eligibility.py
+│   └── test_orchestrator.py
+│
+├── requirements.txt
+├── .env.example
+├── docker-compose.yml                   # MongoDB local setup
+└── README.md
+
+================================================================================
+4. CORE DATA MODELS
+================================================================================
+
+USER PROFILE:
+{
+  _id: ObjectId
+  user_id: str (unique)
+  name: str
+  email: str
+  phone: str (verified via OTP)
+  age: int
+  income: float
+  occupation: str
+  state: str
+  ration_card: bool
+  education_level: str
+  dependents: int
+  created_at: timestamp
+  profile_complete: bool
+}
+
+POLICY:
+{
+  _id: ObjectId
+  policy_id: str (unique)
+  name: str
+  description: str
+  ministry: str
+  eligibility_criteria: {
+    min_age: int,
+    max_age: int,
+    income_limit: float,
+    required_documents: [str]
+  }
+  benefits: {
+    amount: float,
+    frequency: str (monthly/one-time)
+  }
+  claim_process: [str] (steps)
+  deadline: str
+  related_policies: [policy_id]
+  llm_summary: str (generated explanation)
+}
+
+ELIGIBILITY_RESULT:
+{
+  user_id: str
+  eligible_policies: [policy_id]
+  ineligible_policies: {
+    policy_id: str,
+    reason: str
+  }
+  timestamp: timestamp
+  match_score: float (0-1)
+}
+
+USER_SESSION:
+{
+  session_id: str (JWT token)
+  user_id: str
+  conversation_history: [
+    {
+      role: "user" | "assistant",
+      content: str,
+      agent: str
+    }
+  ]
+  current_workflow: str
+  state: dict (context data)
+  created_at: timestamp
+  expires_at: timestamp
+}
+
+================================================================================
+5. KEY API ENDPOINTS (MVP)
+================================================================================
+
+AUTHENTICATION:
+POST   /api/v1/auth/register          # User registration
+POST   /api/v1/auth/login             # Login with email/password
+POST   /api/v1/auth/verify-otp        # Phone verification
+POST   /api/v1/auth/refresh           # Refresh JWT token
+POST   /api/v1/auth/logout            # Logout
+
+USER PROFILE:
+GET    /api/v1/user/profile           # Get user profile
+PUT    /api/v1/user/profile           # Update profile
+POST   /api/v1/user/profile/complete  # Mark profile as complete
+
+POLICIES:
+GET    /api/v1/policies               # List all policies (with filters)
+GET    /api/v1/policies/{policy_id}   # Get policy details
+GET    /api/v1/policies/search?q=     # Search policies (RAG-based)
+
+ELIGIBILITY:
+POST   /api/v1/eligibility/check      # Check eligibility for user
+GET    /api/v1/eligibility/results    # Get previous results
+
+ORCHESTRATION:
+POST   /api/v1/query                  # Main query endpoint (routes to agents)
+POST   /api/v1/query/eligibility      # Direct eligibility query
+POST   /api/v1/query/explanation      # Get policy explanation
+POST   /api/v1/query/claim-guide      # Get claim steps
+GET    /api/v1/session/history        # Get conversation history
+
+HEALTH:
+GET    /api/v1/health                 # Health check
+
+================================================================================
+6. AGENT ARCHITECTURE & ORCHESTRATION
+================================================================================
+
+BASE AGENT CLASS:
+```
+class BaseAgent:
+  - agent_id: str
+  - agent_type: str (eligibility, explanation, etc)
+  - execute(query, context, user_profile) -> AgentResponse
+  - validate_input(query) -> bool
+```
+
+CORE AGENTS (MVP - 24 HOURS):
+
+1. ELIGIBILITY AGENT (PRIORITY: HIGH)
+   Input: User profile
+   Output: List of eligible policies with match scores
+   Logic:
+     - Rule-based matching against eligibility_rules.json
+     - Score calculation based on criteria match
+     - Caching of results
+   Implementation: Python rules engine + MongoDB queries
+   Time: 4-5 hours
+
+2. POLICY EXPLANATION AGENT (PRIORITY: HIGH)
+   Input: Policy ID, user language preference
+   Output: Simplified policy explanation + documents needed
+   Logic:
+     - Retrieve policy from database
+     - Use LLM to generate simple explanation
+     - Extract required documents
+     - Return in local language (mock for Hindi)
+   Implementation: OpenAI API + prompt engineering
+   Time: 3-4 hours
+
+3. GUIDANCE AGENT (PRIORITY: MEDIUM - Skeleton)
+   Input: Policy ID, User profile
+   Output: Step-by-step claim process
+   Status: Skeleton with mock responses
+   Implementation: Return hardcoded claims steps for demo
+   Time: 2-3 hours
+
+4. OPTIMIZATION AGENT (PRIORITY: LOW - Skeleton)
+   Input: User profile, list of eligible policies
+   Output: Best combination of benefits
+   Status: Skeleton implementation
+   Implementation: Return top 3 policies for demo
+   Time: 1-2 hours
+
+5. VOICE AGENT (PRIORITY: VERY LOW - Not Started)
+   Status: Skeleton only (not functional for hackathon)
+
+ORCHESTRATOR (PRIORITY: CRITICAL):
+```
+class BharatOrchestrator:
+  - route_query(query, user_profile) -> selected_agent
+  - execute_workflow(workflow_name, context) -> final_response
+  - manage_session(session_id) -> session_state
+  - aggregate_responses(agent_outputs) -> unified_response
+  - handle_context_switching() -> maintain state across agents
+```
+
+Orchestration Logic:
+1. User submits query
+2. Orchestrator analyzes intent (eligibility? explanation? claim?)
+3. Routes to appropriate agent(s)
+4. Manages session state
+5. Collects outputs
+6. Formats unified response
+7. Returns to frontend
+
+Workflow Example:
+```
+User Query: "I'm self-employed with ₹20k monthly income. What benefits can I get?"
+
+Step 1: Parse profile from query
+  → age, income, occupation extracted
+
+Step 2: Route to Eligibility Agent
+  → Check against 20+ policies
+  → Return 5 eligible schemes
+
+Step 3: Route to Optimization Agent
+  → Rank by benefit amount
+  → Return top 3
+
+Step 4: Route to Explanation Agent (background)
+  → Generate simple summaries for top 3
+  → Extract required documents
+
+Step 5: Aggregate & Return
+  → Final response with eligible schemes + explanations + documents
+```
+
+================================================================================
+7. IMPLEMENTATION TIMELINE (24 HOURS)
+================================================================================
+
+HOUR 0-1: PROJECT SETUP
+- [ ] Initialize FastAPI project & virtual environment
+- [ ] Set up MongoDB (local or Atlas)
+- [ ] Create project structure
+- [ ] Configure environment variables (.env)
+- [ ] Set up logging & error handling
+
+HOUR 1-2: DATABASE & MODELS
+- [ ] Create MongoDB schemas (User, Policy, Session)
+- [ ] Seed policy database (50-100 sample policies)
+- [ ] Create Pydantic models for API validation
+- [ ] Set up connection pooling
+
+HOUR 2-4: AUTHENTICATION
+- [ ] Implement JWT token generation
+- [ ] User registration endpoint (email/password)
+- [ ] Login endpoint
+- [ ] OTP verification (mock service)
+- [ ] Middleware for protected routes
+
+HOUR 4-6: USER PROFILE
+- [ ] Profile creation endpoint
+- [ ] Profile update endpoint
+- [ ] Profile retrieval endpoint
+- [ ] Add validation for profile fields
+
+HOUR 6-10: ELIGIBILITY AGENT (CORE)
+- [ ] Load eligibility rules from JSON
+- [ ] Implement rule matching logic
+- [ ] Score calculation algorithm
+- [ ] Database queries for policy matching
+- [ ] Caching layer for performance
+- [ ] Test with sample profiles
+
+HOUR 10-13: POLICY EXPLANATION AGENT (CORE)
+- [ ] Set up LLM client (OpenAI or local)
+- [ ] Create prompt templates for explanations
+- [ ] Implement policy search/retrieval
+- [ ] Add document extraction logic
+- [ ] Handle language preferences (mock Hindi support)
+- [ ] Test explanation generation
+
+HOUR 13-15: ORCHESTRATION ENGINE
+- [ ] Implement base Agent class
+- [ ] Create Orchestrator class
+- [ ] Implement routing logic (which agent for which query)
+- [ ] Implement session state management
+- [ ] Implement workflow execution
+- [ ] Add output aggregation logic
+
+HOUR 15-17: API ENDPOINTS
+- [ ] /api/v1/query (main orchestration endpoint)
+- [ ] /api/v1/eligibility/check
+- [ ] /api/v1/policies/search
+- [ ] Response formatting & serialization
+- [ ] Error handling & status codes
+- [ ] Input validation
+
+HOUR 17-19: SKELETON AGENTS
+- [ ] Guidance Agent (mock responses)
+- [ ] Optimization Agent (mock ranking)
+- [ ] Voice Agent (stub only)
+- [ ] Integrate skeletons with orchestrator
+
+HOUR 19-21: TESTING & INTEGRATION
+- [ ] End-to-end workflow testing
+- [ ] API testing (Postman/curl)
+- [ ] Database integrity checks
+- [ ] Performance testing (query latency)
+- [ ] Error scenario testing
+- [ ] Session management verification
+
+HOUR 21-23: REFINEMENTS
+- [ ] Code cleanup & documentation
+- [ ] Add missing error handlers
+- [ ] Optimize slow queries
+- [ ] Add request logging
+- [ ] Docker setup for easy deployment
+- [ ] README with setup instructions
+
+HOUR 23-24: DEMO PREPARATION
+- [ ] Create sample user profiles for demo
+- [ ] Prepare demo queries & workflows
+- [ ] Test full journey end-to-end
+- [ ] Prepare API documentation
+- [ ] Final code review
+
+================================================================================
+8. CRITICAL SUCCESS FACTORS
+================================================================================
+
+MUST HAVE (Non-negotiable):
+✓ Authentication working (JWT + Profile)
+✓ Eligibility Agent fully functional
+✓ Policy Explanation Agent working
+✓ Orchestrator routing queries correctly
+✓ At least 1 complete end-to-end workflow
+✓ API documentation (Swagger)
+✓ Database seeded with real policies
+
+NICE TO HAVE (If time permits):
+~ Guidance Agent with semi-functional claims steps
+~ Optimization Agent with ranking logic
+~ Caching layer for performance
+~ Rate limiting & security hardening
+~ Comprehensive test suite
+
+AVOID (Risk of incomplete):
+✗ Full voice agent implementation
+✗ Complex ML-based eligibility
+✗ Real government API integration
+✗ Advanced NLP for query understanding
+✗ Mobile app backend
+
+================================================================================
+9. DATA & KNOWLEDGE BASE STRATEGY
+================================================================================
+
+POLICY DATABASE:
+- Start with 50-100 sample policies
+- Cover major schemes:
+  * Healthcare (PMJAY, Ayushman Bharat)
+  * Social Security (MNREGA, PM-KISAN)
+  * Education (Scholarship schemes)
+  * Insurance (PMJJBY, PMSBY)
+  * Pension (APY, OPS)
+
+ELIGIBILITY RULES:
+- JSON-based rule engine
+- Simple IF-THEN logic
+- Example:
+  ```
+  {
+    "policy_id": "PMJAY001",
+    "rules": [
+      {"field": "income", "operator": "<=", "value": 500000},
+      {"field": "age", "operator": ">=", "value": 18},
+      {"field": "state", "operator": "in", "value": ["all"]}
+    ]
+  }
+  ```
+
+RAG RETRIEVAL:
+- Simple keyword + semantic search
+- Policy embeddings (use OpenAI or offline)
+- Retrieve top 5 relevant policies for a query
+
+================================================================================
+10. DEPLOYMENT & DEMO SETUP
+================================================================================
+
+LOCAL DEVELOPMENT:
+- Docker Compose for MongoDB
+- Virtual environment for Python
+- .env file for credentials
+- npm or pip for dependency management
+
+DEMO ENVIRONMENT:
+- FastAPI running on localhost:8000
+- MongoDB running in Docker
+- Postman collection for API testing
+- Sample user accounts pre-created
+
+PRESENTATION:
+- Show architecture diagram
+- Demo user query journey
+- Show API responses (Swagger docs)
+- Explain orchestration flow
+- Highlight innovative aspects (multi-agent + optimization)
+
+================================================================================
+11. ERROR HANDLING & EDGE CASES
+================================================================================
+
+HANDLE:
+- Invalid user profile data → Validation errors
+- Policy not found → 404 response
+- Eligibility computation fails → Fallback to manual check
+- LLM API fails → Use template fallback explanation
+- Session expired → Re-authentication required
+- Concurrent requests → Session isolation
+
+LOGGING:
+- All API requests/responses
+- Agent execution trace
+- Error stack traces
+- Performance metrics (latency)
+
+================================================================================
+12. FUTURE SCALABILITY NOTES
+================================================================================
+
+POST-HACKATHON ROADMAP:
+1. Integration with real government APIs
+2. Advanced NLP for intent understanding
+3. Multilingual support (Tamil, Hindi, Marathi)
+4. Mobile app backend
+5. Voice processing (Whisper API)
+6. ML-based eligibility prediction
+7. Advanced optimization (benefit combinations)
+8. User feedback loop & continuous improvement
+
+================================================================================
+END OF IMPLEMENTATION PLAN
+================================================================================

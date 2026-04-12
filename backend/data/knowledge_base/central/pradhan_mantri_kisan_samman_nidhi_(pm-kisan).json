@@ -1,0 +1,15 @@
+{
+    "scheme_name": "Pradhan Mantri Kisan Samman Nidhi (PM-KISAN)",
+    "category": "Farmer",
+    "benefit": "Direct payment of Rs. 6000 per year in three equal installments of Rs. 2000 each.",
+    "eligibility": [
+        "Aadhar Card",
+        "Land Records",
+        "Bank Account Details"
+    ],
+    "application_process": [
+        "Register on PM-KISAN portal",
+        "Upload land records",
+        "E-KYC verification"
+    ]
+}

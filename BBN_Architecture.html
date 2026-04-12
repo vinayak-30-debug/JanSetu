@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bharat Benefits Navigator - System Architecture</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --primary: #0f766e;
+            --primary-light: #134e4a;
+            --secondary: #f0fdfa;
+            --accent: #f59e0b;
+            --text-dark: #111827;
+            --text-light: #4b5563;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            margin: 0;
+            padding: 0;
+            background-color: #f9fafb;
+        }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 3rem 1rem;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            letter-spacing: -0.025em;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-top: 0.5rem;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        section {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        h2 {
+            color: var(--primary);
+            border-bottom: 2px solid var(--secondary);
+            padding-bottom: 0.5rem;
+            margin-top: 0;
+        }
+
+        .mermaid {
+            display: flex;
+            justify-content: center;
+            margin: 2rem 0;
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        .module-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .module-card {
+            padding: 1.5rem;
+            background: var(--secondary);
+            border-left: 4px solid var(--primary);
+            border-radius: 0 8px 8px 0;
+        }
+
+        .module-card h3 {
+            margin-top: 0;
+            color: var(--primary-light);
+        }
+
+        code {
+            background: #f1f5f9;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        ul {
+            padding-left: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Bharat Benefits Navigator (BBN)</h1>
+    <p>Technical Architecture & Implementation Blueprint</p>
+</header>
+
+<div class="container">
+
+    <!-- 1. System Overview Diagram -->
+    <section>
+        <h2>1. Global System Architecture</h2>
+        <p>BBN follows a layered <strong>Multi-Agent Orchestration</strong> pattern. The system decouples intelligence into specialized agents coordinated by a central brain.</p>
+        <div class="mermaid">
+graph TD
+    User([User App]) <--> API[FastAPI Gateway]
+    
+    subgraph Orchestration Layer
+        API <--> ORCH[Bharat Orchestrator]
+    end
+
+    subgraph Intelligence Layer
+        ORCH <--> RAG[RAG Retriever]
+        ORCH <--> ELIG[Eligibility Agent]
+        ORCH <--> EXPL[Explanation Agent]
+    end
+
+    subgraph Knowledge Base
+        RAG --> CB[Central Schemes]
+        RAG --> SB[State Schemes]
+    end
+
+    subgraph Decision Layer
+        ORCH --> DEC[Decision Engine]
+        DEC --> OPT[Optimization Engine]
+        DEC --> ADV[Document Advisor]
+        DEC --> MLM[ML Success Predictor]
+    end
+
+    subgraph Data Layer
+        ORCH <--> MONGO[(MongoDB Profiles)]
+    end
+
+    style ORCH fill:#0f766e,color:#fff
+    style DEC fill:#134e4a,color:#fff
+    style RAG fill:#f59e0b,color:#fff
+        </div>
+    </section>
+
+    <!-- 2. Workflow Explanation -->
+    <section>
+        <h2>2. Dynamic Workflow</h2>
+        <p>The sequence below illustrates how a single user query triggers a chain of intelligent events:</p>
+        <div class="mermaid">
+sequenceDiagram
+    participant U as User
+    participant O as Orchestrator
+    participant R as RAG Retriever
+    participant E as Eligibility Agent
+    participant D as Decision Layer
+    participant X as Explanation Agent
+
+    U->>O: "Am I eligible for farming schemes in Telangana?"
+    O->>R: Semantic Search (Query + Profile)
+    R->>O: Top 5 Relevant Schemes (JSON)
+    O->>E: Batch Check Logic
+    E->>O: Eligibility Status + Missing Reqs
+    O->>D: Score & Optimize Result
+    D->>O: Ranked List + Probability + Actions
+    O->>X: Generate Summary (Context + Data)
+    X->>O: Empathetic Natural Language Response
+    O->>U: Final Structured AI Response
+        </div>
+    </section>
+
+    <!-- 3. Module Deep-Dive -->
+    <section>
+        <h2>3. Module Breakdown</h2>
+        <div class="module-grid">
+            <div class="module-card">
+                <h3>🔍 RAG Retriever</h3>
+                <p>Uses <code>FAISS</code> and <code>SentenceTransformers</code>. It recursively scans the Knowledge Base to perform semantic matching between user intent and policy text.</p>
+            </div>
+            <div class="module-card">
+                <h3>⚖️ Eligibility Agent</h3>
+                <p>A deterministic rule engine that parses JSON policy criteria and compares them against user socio-economic attributes (age, income, location).</p>
+            </div>
+            <div class="module-card">
+                <h3>📈 Decision Engine</h3>
+                <p>Aggregates agent outputs to provide "Success Probability" (ML) and "Benefit Maximization" (Ranking policies by financial value).</p>
+            </div>
+            <div class="module-card">
+                <h3>🤖 Explanation Agent</h3>
+                <p>Gemini-powered LLM that removes "Bureaucratic Jargon" and provides a user-friendly, empathetic summary of rights and benefits.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. Orchestrator Logic -->
+    <section>
+        <h2>4. Orchestrator Decision Logic</h2>
+        <p>The <code>BharatOrchestrator</code> uses the following logical steps:</p>
+        <ul>
+            <li><strong>Intent Extraction</strong>: Detects if the user wants discovery, eligibility check, or application assistance.</li>
+            <li><strong>Context Hydration</strong>: Enriches the query with the user's Profile & Document Status from MongoDB.</li>
+            <li><strong>Parallel Selection</strong>: Routes the hydrated query to the RAG retriever and Eligibility agents concurrently.</li>
+            <li><strong>Decision Synthesis</strong>: Synthesizes a unified response containing the Final Answer, Recommended Schemes, and the next Best Action.</li>
+        </ul>
+    </section>
+
+    <!-- 5. Future Scope -->
+    <section>
+        <h2>5. Future Roadmap</h2>
+        <div class="module-grid">
+            <div class="module-card">
+                <h3>🌍 Cross-State Mobility</h3>
+                <p>Automatic recommendation of schemes for migrant workers moving between states (e.g., Telangana to Maharashtra).</p>
+            </div>
+            <div class="module-card">
+                <h3>🔒 Privacy-First ML</h3>
+                <p>Federated learning for claim prediction without centralizing sensitive document data.</p>
+            </div>
+            <div class="module-card">
+                <h3>🎙️ Voice Interoperability</h3>
+                <p>Real-time speech-to-intent in local dialects to reach rural, low-literacy populations.</p>
+            </div>
+        </div>
+    </section>
+
+</div>
+
+<footer>
+    &copy; 2026 Bharat Benefits Navigator | High-Impact Welfare Intelligence
+</footer>
+
+<script>
+    mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+</script>
+</body>
+</html>

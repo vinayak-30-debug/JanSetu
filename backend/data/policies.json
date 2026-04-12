@@ -1,0 +1,72 @@
+[
+    {
+        "policy_id": "PMJAY001",
+        "name": "Pradhan Mantri Jan Arogya Yojana (Ayushman Bharat)",
+        "description": "The world's largest health insurance scheme, providing a cover of Rs. 5 lakhs per family per year for secondary and tertiary care hospitalization.",
+        "ministry": "Ministry of Health and Family Welfare",
+        "category": "Healthcare",
+        "benefits": {
+            "amount": 500000,
+            "frequency": "annual",
+            "coverage": "family"
+        },
+        "eligibility_criteria": {
+            "min_age": 0,
+            "max_age": 100,
+            "income_limit": 120000,
+            "required_occupations": [
+                "any"
+            ],
+            "required_states": [
+                "all"
+            ],
+            "required_documents": [
+                "Aadhar Card",
+                "Ration Card",
+                "Income Certificate"
+            ]
+        },
+        "application_process": [
+            "Visit nearest empanelled hospital",
+            "Show Aadhar or Ration card to Ayushman Mitra",
+            "Get pre-authorization done",
+            "Undergo treatment"
+        ],
+        "official_url": "https://pmjay.gov.in"
+    },
+    {
+        "policy_id": "PMKISAN001",
+        "name": "Pradhan Mantri Kisan Samman Nidhi",
+        "description": "Government of India initiative that provides up to Rs 6,000 per year as minimum income support to all small and marginal farmers.",
+        "ministry": "Ministry of Agriculture and Farmers Welfare",
+        "category": "Agriculture",
+        "benefits": {
+            "amount": 6000,
+            "frequency": "annual",
+            "installments": 3
+        },
+        "eligibility_criteria": {
+            "min_age": 18,
+            "max_age": 100,
+            "income_limit": 500000,
+            "required_occupations": [
+                "farmer"
+            ],
+            "required_states": [
+                "all"
+            ],
+            "required_documents": [
+                "Land Records",
+                "Aadhar Card",
+                "Bank Account Details"
+            ]
+        },
+        "application_process": [
+            "Register on PM-KISAN portal",
+            "Upload land ownership documents",
+            "E-KYC verification",
+            "Aadhar seeding with bank account"
+        ],
+        "official_url": "https://pmkisan.gov.in"
+    }
+]

@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BBN - Comprehensive Technical Deep-Dive</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Fira+Code:wght@400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0f766e;
+            --primary-glow: rgba(15, 118, 110, 0.15);
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #0f172a;
+            --border: #e2e8f0;
+            --accent-orange: #f59e0b;
+            --accent-blue: #3b82f6;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 50px;
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .header h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin: 0;
+            letter-spacing: -2px;
+        }
+
+        .header p {
+            font-size: 1.25rem;
+            color: #64748b;
+            margin-top: 10px;
+        }
+
+        .section-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 45px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+            margin-bottom: 50px;
+        }
+
+        h2 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            color: var(--text);
+        }
+
+        h2::before {
+            content: "";
+            display: inline-block;
+            width: 10px;
+            height: 35px;
+            background: var(--primary);
+            margin-right: 15px;
+            border-radius: 5px;
+        }
+
+        .mermaid-container {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid #f1f5f9;
+            margin: 35px 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        .detailed-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .detail-box {
+            padding: 25px;
+            background: #f8fafc;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .detail-box h3 {
+            margin-top: 0;
+            color: var(--primary);
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .detail-box h3 svg {
+            margin-right: 10px;
+        }
+
+        .workflow-box {
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 35px;
+            border-radius: 20px;
+            font-family: 'Fira Code', monospace;
+            margin: 30px 0;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+        }
+
+        .code-comment {
+            color: #64748b;
+        }
+
+        .code-keyword {
+            color: #818cf8;
+        }
+
+        .code-string {
+            color: #34d399;
+        }
+
+        .tech-tag {
+            display: inline-block;
+            background: var(--primary-glow);
+            color: var(--primary);
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-right: 10px;
+        }
+
+        .dir-tree {
+            font-family: 'Fira Code', monospace;
+            background: #f1f5f9;
+            padding: 30px;
+            border-radius: 16px;
+            border: 1px solid #cbd5e1;
+        }
+
+        .dir-item {
+            margin-bottom: 15px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+
+        .dir-item:last-child {
+            border-bottom: none;
+        }
+
+        .dir-name {
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .dir-desc {
+            color: #475569;
+            display: block;
+            margin-top: 5px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+        }
+
+        footer {
+            text-align: center;
+            color: #94a3b8;
+            padding: 40px 0;
+            border-top: 1px solid #e2e8f0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>BBN Intelligence OS</h1>
+            <p>A Deep-Dive into the Multi-Agent Hybrid Governance Framework</p>
+        </div>
+
+        <!-- 1. The Component Registry -->
+        <div class="section-card">
+            <h2>System Directory & Domain Boundaries</h2>
+            <div class="dir-tree">
+                <div class="dir-item">
+                    <span class="dir-name">/backend/app/orchestration/orchestrator.py</span>
+                    <span class="dir-desc"><strong>The Choreographer:</strong> Manages state hydration, async
+                        concurrency, and agent synthesis. It is the only component that talks to all others.</span>
+                </div>
+                <div class="dir-item">
+                    <span class="dir-name">/backend/app/utils/rag_retriever.py</span>
+                    <span class="dir-desc"><strong>The Knowledge Synapse:</strong> Handles vectorization of 90+ schemes.
+                        Uses all-MiniLM-L6-v2 for encoding and FAISS for sub-millisecond similarity search.</span>
+                </div>
+                <div class="dir-item">
+                    <span class="dir-name">/backend/app/agents/eligibility_agent.py</span>
+                    <span class="dir-desc"><strong>The Jurisprudence Engine:</strong> A low-latency deterministic engine
+                        that translates natural language criteria into hard Boolean logic trees.</span>
+                </div>
+                <div class="dir-item">
+                    <span class="dir-name">/backend/app/decision/</span>
+                    <span class="dir-desc"><strong>The Analytics Core:</strong> Contains
+                        <code>optimization_engine</code> (benefit maximization) and <code>document_advisor</code> (gap
+                        analysis & readiness profiling).</span>
+                </div>
+                <div class="dir-item">
+                    <span class="dir-name">/backend/app/utils/llm_client.py</span>
+                    <span class="dir-desc"><strong>The Reasoning Interface:</strong> abstracts the Gemini 1.5 Flash API
+                        with advanced error handling and token-optimized prompt construction.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Logic Deep-Dive: The Intelligence Loop -->
+        <div class="section-card">
+            <h2>The Multi-Agent Execution Lifecycle</h2>
+            <p>BBN doesn't just "chat"—it calculates. The diagram below shows the <strong>non-linear parallel
+                    execution</strong> flow that powers the dashboard.</p>
+
+            <div class="mermaid-container">
+                <div class="mermaid">
+                    sequenceDiagram
+                    autonumber
+                    participant U as User Hub
+                    participant O as Orchestrator
+                    participant M as MongoDB
+                    participant R as RAG Service
+                    participant E as Eligibility Logic
+                    participant D as Decision Engines
+                    participant G as Gemini Reasoner
+
+                    U->>O: "What schemes help my family in Telangana?"
+                    O->>+M: Load User Persona & Document Status
+                    M-->>-O: JSON Profile Data
+
+                    Note over O,E: PARALLEL COMPUTATION BLOCK
+                    par Intent -> Discovery
+                    O->>R: Vector Embedding Query
+                    R-->>O: Set of Policy Chunks (Context)
+                    and Profile -> Rules
+                    O->>E: Batch deterministic check
+                    E-->>O: Eligibility Vector [0, 1, 0, 1]
+                    end
+
+                    O->>+D: Run Analysis (Optimization + Docs)
+                    D-->>-O: Rank 1: PMJAY (85% Ready), Rank 2: PM-KISAN (Missing Land Rec)
+
+                    O->>+G: Synthesis & Reasoning
+                    G-->>-O: Grounded Natural Language Response
+                    O->>U: Final Intelligence Payload
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. RAG Under the Hood -->
+        <div class="section-card">
+            <h2>RAG Architecture: From Text to Vector</h2>
+            <div class="detailed-grid">
+                <div class="detail-box">
+                    <h3>🔄 Data Ingestion Pipeline</h3>
+                    <p>Unstructured PDFs and semi-structured JSONs are passed through the <code>bulk_processor</code>.
+                    <ul>
+                        <li><strong>Chunking</strong>: Policies are chunked by meaningful "Benefits" and "Eligibility"
+                            headers.</li>
+                        <li><strong>Embedding</strong>: Each chunk is mapped to a 384-dimensional vector space.</li>
+                    </ul>
+                    </p>
+                    <div class="tech-tag">all-MiniLM-L6-v2</div>
+                    <div class="tech-tag">FAISS</div>
+                </div>
+                <div class="detail-box">
+                    <h3>🔍 Smart Retrieval (Context Injection)</h3>
+                    <p>We use <strong>Cosine Similarity</strong> to find the closest policy match. The system then
+                        "hydrates" the LLM prompt with the exact text found, ensuring 0% hallucination.</p>
+                    <div class="tech-tag">Cosine Similarity</div>
+                    <div class="tech-tag">Context Windowing</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. The Decision Mechanism -->
+        <div class="section-card">
+            <h2>The Decision Layer Mechanism</h2>
+            <p>This is the "Math Layer" that happens between RAG and the final response.</p>
+            <div class="workflow-box">
+                <span class="code-keyword">struct</span> DecisionPayload {
+                <span class="code-comment">// Calculated by Optimization Engine</span>
+                total_benefit_value: <span class="code-keyword">float</span>,
+
+                <span class="code-comment">// Calculated by Eligibility Agent</span>
+                unmet_criteria: <span class="code-keyword">list</span>[<span class="code-string">"Income too
+                    high"</span>, <span class="code-string">"State Mismatch"</span>],
+
+                <span class="code-comment">// Calculated by Document Advisor</span>
+                readiness_percentage: <span class="code-keyword">int</span>,
+                missing_docs: <span class="code-keyword">list</span>[<span class="code-string">"Ration Card"</span>]
+                }
+            </div>
+            <p>By providing this raw data to the **Explanation Agent**, the AI can say things like: <br>
+                <em>"You are exactly ₹3,000 away from maximizing your monthly benefits. Upload your Ration Card to
+                    unlock the PM-JAY scheme."</em>
+            </p>
+        </div>
+
+        <footer>
+            &copy; 2026 Bharat Benefits Navigator | Tier-1 Welfare Intelligence Architecture
+        </footer>
+
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'neutral',
+            sequence: { showSequenceNumbers: true, useMaxWidth: false }
+        });
+    </script>
+</body>
+
+</html>

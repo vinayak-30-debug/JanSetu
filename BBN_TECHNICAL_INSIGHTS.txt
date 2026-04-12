@@ -1,0 +1,117 @@
+================================================================================
+          BHARAT BENEFITS NAVIGATOR (BBN) - ARCHITECTURAL DEEP DIVE
+          Project: YUVAAN 2026 AI/ML Hackathon | Track: Digital India
+================================================================================
+
+1. EXECUTIVE SUMMARY
+---------------------
+Bharat Benefits Navigator (BBN) is an advanced AI-driven orchestrator designed to 
+bridge the gap between complex government policy data and the end citizen. 
+By leveraging a Multi-LLM "Alternating Brain" architecture, specialized RAG 
+vector retrieval, and a transparent "Real-Time Assistance" reasoning core, 
+BBN ensures that every Indian citizen finds 100% relevant benefits with 
+zero information leakage.
+
+2. LOGICAL ARCHITECTURE LAYERS
+-------------------------------
+
+A. DATA INGESTION & REGISTRY LAYER
+   - Synthetic Citizen Registry: Localized JSON-based database containing 
+     detailed profiles (Aadhaar, PAN, Income, Caste, State, Occupation).
+   - Knowledge Base (KB): A hierarchical repository of Central and State 
+     government policies, categorized by Ministry and Benefit type.
+   - Dynamic Normalization: A Python-based ingestion pipeline that maps 
+     diverse JSON schemas into a canonical "Policy" model for consistent 
+     eligibility processing.
+
+B. INTELLIGENCE ORCHESTRATION (The "BBN Brain")
+   - Multi-Model Alternation: BBN does not rely on a single LLM. It alternates 
+     between Google Gemini Pro and GPT-OSS-120B to provide a balanced 
+     response profile (Gemini for speed/logic, GPT-OSS for deep reasoning).
+   - Agentic Workflow:
+      1. Retrieval Agent: Performs semantic vector search.
+      2. Filter Agent: Applies hard-coded state/caste/income locks.
+      3. Explanation Agent: Generates human-readable, multi-lingual guidance.
+      4. Decision Agent: Calculates exact benefit amounts and missing documents.
+
+C. THE RAG (RETRIEVAL-AUGMENTED GENERATION) ENGINE
+   - Vectorization: Uses `SentenceTransformer` (all-MiniLM-L6-v2) to generate 
+     768-dimensional embeddings for every policy.
+   - Indexing: FAISS (Facebook AI Similarity Search) is used for high-speed 
+     L2 distance matching across thousands of policy documents.
+   - Geolocation Locking: Our unique proprietary logic detects state 
+     abbreviations (YSRA, MHIS, MJPJAY) in real-time to prevent 
+     Meghalaya schemes from appearing in Andhra Pradesh results.
+
+3. FRONTEND NAVIGATION PILLARS (Decoupled UI)
+----------------------------------------------
+
+The frontend is built on React 18 + Vite with a high-end, premium aesthetic. 
+Unlike standard dashboards, BBN uses specialized navigational components 
+for different user mental models:
+
+A. DASHBOARD TAB (Central Intelligence)
+   - Real-time Aadhaar search and verification.
+   - High-level "Eligibility Score" and "Monthly Benefit" overview.
+   - Recommended schemes based on ML predicted approval likelihood.
+
+B. ELIGIBILITY TAB (Transparency & Trust)
+   - Detailed "Profile Match" percentage visualization.
+   - Geolocation Lock verifyer: Explicitly informs the user that only 
+     relevant State/Central policies are being processed.
+   - Real-time document verification checklist (4/5 documents verified).
+
+C. CLAIM ASSISTANCE TAB (The Functional Guide)
+   - Procedural Expert System: Breaks down the complex application process 
+     into four AI-curated actionable steps.
+   - Status: "RTA Ready" - confirms if all documents are pre-indexed for 
+     immediate digital submission.
+
+D. OPTIMIZATION TAB (Financial Forecasting)
+   - Multi-scheme combination logic: Shows how PM-Kisan and local state 
+     scholarships can be stacked for higher benefits.
+   - Savings Projection: Estimated annual savings based on current 
+     utilization vs. projected AI-optimized paths.
+
+E. INSIGHTS TAB (Data Governance)
+   - Visualizes the "Allocation Mix" (Central vs State vs Local).
+   - Regional Status: Shows live domicile policy count and beta trend 
+     forecasting arrival.
+
+4. REAL-TIME ASSISTANCE (RTA) & REASONING CORE
+-----------------------------------------------
+
+BBN solves the "Black Box" problem of AI by exposing the internal pipeline.
+
+* Reasoning Details: The backend captures the "Chain of Thought" from 
+  the LLMs and transmits the `reasoning_details` string to the frontend.
+* RTA Component: A terminal-style live analysis board that updates with 
+  every search, showing the AI's internal sequence.
+* Deep Dive Modal: A high-end technical overlay triggered by the 
+  "Orchestration Model" card, allowing technical judges to see:
+    - Vector search accuracy percentages.
+    - Logic nodes checked.
+    - Live terminal log [INVOKE -> QUERY -> RAG -> MATCH -> LLM].
+
+5. TECHNICAL STACK & SECURITY
+------------------------------
+
+- Backend: FastAPI (Python 3.10+) - High performance, asynchronous endpoints.
+- AI Frameworks: Faiss, Sentence-Transformers, requests-based LLM routing.
+- Frontend: React, Tailwind CSS, Lucide Icons, Framer Motion for animations.
+- Database: JSON-Flat-File (Hackathon Optimized) + FAISS Vector Index.
+- Security: End-to-end encryption for Aadhaar/PAN data, ensuring 
+  compliance with Digital Personal Data Protection (DPDP) standards.
+
+6. CONCLUSION
+--------------
+Bharat Benefits Navigator represents a paradigm shift in G2C 
+(Government-to-Citizen) interaction. By combining high-end 
+Multimodal AI with strict regional intelligence, we ensure that 
+"Maximum Governance, Minimum Government" becomes a reality for 
+every citizen, starting from their very first Aadhaar search.
+
+================================================================================
+DOCUMENT VERSION: 5.2.0 | REVISION DATE: 03-MAR-2026
+BHARAT BENEFITS NAVIGATOR - "SASHAKT BHARAT, SAMARTH BHARAT
+================================================================================

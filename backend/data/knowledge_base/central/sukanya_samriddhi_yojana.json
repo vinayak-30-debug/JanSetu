@@ -1,0 +1,13 @@
+{
+  "policy_id": "CENT-SSY-001",
+  "scheme_name": "Sukanya Samriddhi Yojana",
+  "category": "Savings",
+  "description": "Long-term small savings scheme for girl children.",
+  "benefit": "High-interest savings account for girl child",
+  "eligibility_criteria": {
+    "required_states": ["all"],
+    "gender": "Female",
+    "max_age": 10,
+    "indian_citizen": true
+  }
+}

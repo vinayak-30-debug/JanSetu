@@ -1,0 +1,8 @@
+{
+    "scheme_name": "CM Health Insurance Scheme",
+    "category": "Health",
+    "benefit": "Insurance coverage",
+    "eligibility": [
+        "Age between 0 and 100 years"
+    ]
+}

@@ -1,0 +1,1135 @@
+================================================================================
+BHARAT BENEFITS NAVIGATOR (BBN)
+MULTI-LLM ORCHESTRATION STRATEGY & KNOWLEDGE BASE ARCHITECTURE
+================================================================================
+
+PROJECT: AI-Powered Welfare & Insurance Benefits Platform
+DOCUMENT: Detailed LLM Routing, Orchestration Logic, and Knowledge Base Design
+DATE: March 2026
+
+================================================================================
+1. MULTI-LLM STRATEGY OVERVIEW
+================================================================================
+
+AVAILABLE LLMs:
+1. Gemini (Google) - Fast, structured outputs
+2. Llama 80B (Meta) - Conversational, good for NLU
+3. Claude (Anthropic) - Best for step-by-step guidance
+
+STRATEGY: Intelligent orchestration routes queries to the BEST LLM for each task
+BENEFIT: Optimized accuracy, speed, cost-efficiency for different agent types
+
+================================================================================
+2. Agent → LLM MAPPING MATRIX
+================================================================================
+
+AGENT NAME: Policy Explanation Agent
+LLM CHOICE: Gemini (Primary)
+WHY: 
+  - Best at converting complex policy text into simple language
+  - Fast API response (critical for demo)
+  - Structured output formatting
+  - Free tier available
+USE CASE: "What are the benefits of PMJAY?"
+PROMPT TEMPLATE:
+  "Explain this government policy in simple terms for a non-technical user:
+   {policy_text}
+   Include: Benefits, Eligibility, Required Documents, Deadline
+   Format: Bullet points, easy to understand"
+RESPONSE: Simple explanation + required docs list
+
+---
+
+AGENT NAME: Claim Guidance Agent
+LLM CHOICE: Claude (Primary)
+WHY:
+  - Excellent at generating step-by-step procedures
+  - Good at handling nuanced instructions
+  - Strong reasoning for complex workflows
+  - Best for claim simulation
+USE CASE: "How do I claim health benefits?"
+PROMPT TEMPLATE:
+  "Generate a step-by-step claim guide:
+   Policy: {policy_name}
+   User Profile: {user_info}
+   Output: Numbered steps with details, documents needed at each step,
+           estimated timeline, common mistakes to avoid"
+RESPONSE: Detailed claim workflow with steps
+
+---
+
+AGENT NAME: Eligibility Intelligence Agent
+LLM CHOICE: RULE ENGINE (No LLM)
+WHY:
+  - Eligibility must be deterministic & explainable
+  - Rules are clear: income limit, age, etc.
+  - LLM would introduce unnecessary ambiguity
+  - Fast execution needed
+USE CASE: "Am I eligible for PM-KISAN?"
+LOGIC: Evaluate against eligibility_rules.json
+RESPONSE: Yes/No + reason + match score
+
+---
+
+AGENT NAME: Voice/Conversational Agent
+LLM CHOICE: Llama 80B (Primary)
+WHY:
+  - Excellent for natural language understanding
+  - Can be run locally (no API latency)
+  - Good for extracting intent from casual queries
+  - Conversational tone
+USE CASE: "Hey, I heard about some farmer scheme, which one?"
+PROMPT TEMPLATE:
+  "Extract intent and entities from user query:
+   Query: {user_query}
+   Output: Intent (eligibility/explanation/claim/search), 
+           Key entities (scheme name, user type, etc),
+           Confidence score"
+RESPONSE: Parsed intent + entities → Route to another agent
+
+---
+
+AGENT NAME: Benefit Optimization Agent
+LLM CHOICE: Gemini (for ranking explanation)
+WHY:
+  - Explain why certain benefit combination is best
+  - Quick reasoning over multiple policies
+USE CASE: "What's the best combination of benefits for me?"
+LOGIC: Rule-based scoring + Gemini explanation
+RESPONSE: Top 3 benefit combinations with explanations
+
+================================================================================
+3. ORCHESTRATION ENGINE - DETAILED LOGIC
+================================================================================
+
+ARCHITECTURE:
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    USER QUERY                               │
+│        "Am I eligible for health insurance?"                │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+         ┌───────────────▼────────────────┐
+         │  ORCHESTRATOR CORE             │
+         │  (Query Analysis & Routing)    │
+         └───────────────┬────────────────┘
+                         │
+        ┌────────────────┼────────────────┐
+        │                │                │
+  ┌─────▼──────┐  ┌─────▼──────┐  ┌─────▼──────┐
+  │   INTENT   │  │   ENTITY   │  │   CONTEXT  │
+  │ DETECTION  │  │ EXTRACTION │  │  GATHERING │
+  │            │  │            │  │            │
+  │ Eligibility│  │ Age:30     │  │ Income:20k │
+  │ Query      │  │ Occupation │  │ State:TN   │
+  └─────┬──────┘  └─────┬──────┘  └─────┬──────┘
+        │                │                │
+        └────────────────┼────────────────┘
+                         │
+        ┌────────────────▼─────────────────┐
+        │  AGENT SELECTION LOGIC           │
+        │  - Which agent to call?          │
+        │  - Which LLM to use?             │
+        │  - What context to pass?         │
+        └────────────────┬─────────────────┘
+                         │
+        ┌────────────────┼────────────────┐
+        │                │                │
+  ┌─────▼──────────┐  ┌──▼────┐  ┌──────▼──────┐
+  │ ELIGIBILITY    │  │GEMINI │  │  LLAMA 80B  │
+  │ AGENT          │  │       │  │             │
+  │ (Rule Engine)  │  │Policy │  │Conversational
+  │                │  │Explainer  │ Agent
+  │ Checks rules   │  │       │  │
+  │ vs profile     │  │       │  │
+  └─────┬──────────┘  └──┬────┘  └──────┬──────┘
+        │                │                │
+        └────────────────┼────────────────┘
+                         │
+         ┌───────────────▼────────────────┐
+         │  KNOWLEDGE BASE LOOKUP         │
+         │  - Policy database             │
+         │  - Eligibility rules           │
+         │  - RAG retrieval               │
+         │  - Documents required          │
+         └───────────────┬────────────────┘
+                         │
+         ┌───────────────▼────────────────┐
+         │  AGENT EXECUTION               │
+         │  - Run agent logic             │
+         │  - Get LLM response            │
+         │  - Format output               │
+         └───────────────┬────────────────┘
+                         │
+         ┌───────────────▼────────────────┐
+         │  OUTPUT AGGREGATION            │
+         │  - Combine multiple responses  │
+         │  - Ensure consistency          │
+         │  - Format for frontend         │
+         └───────────────┬────────────────┘
+                         │
+                    ┌────▼─────┐
+                    │ Response  │
+                    │ to User   │
+                    └───────────┘
+```
+
+================================================================================
+4. DETAILED ORCHESTRATION WORKFLOW EXAMPLES
+================================================================================
+
+WORKFLOW 1: ELIGIBILITY QUERY
+================================================================================
+User Input: "I'm a farmer, self-employed, age 32, income ₹2 lac/year. Am I eligible
+            for PM-KISAN?"
+
+Step 1: INTENT DETECTION
+  Input: User query
+  Detection: Intent = "ELIGIBILITY_CHECK"
+  Entities Extracted:
+    - Occupation: farmer
+    - Income: 200000
+    - Age: 32
+    - Scheme: PM-KISAN (optional, can search)
+
+Step 2: CONTEXT ENRICHMENT
+  Load from database:
+    - PM-KISAN eligibility rules
+    - Required documents
+    - Benefit amount
+
+Step 3: ROUTE TO AGENT
+  Selected Agent: Eligibility Intelligence Agent
+  Selected LLM: RULE ENGINE (not LLM, deterministic)
+  Reasoning: This is fact-based eligibility check
+
+Step 4: EXECUTE ELIGIBILITY AGENT
+  Input: User profile + PM-KISAN rules
+  
+  Eligibility Rules (from eligibility_rules.json):
+  {
+    "PM-KISAN": {
+      "occupation": ["farmer"],
+      "income_limit": 500000,
+      "age_min": 18,
+      "land_ownership": true
+    }
+  }
+  
+  Evaluation:
+    ✓ Occupation match: farmer ✓ (match)
+    ✓ Income: ₹2,00,000 ≤ ₹5,00,000 ✓ (pass)
+    ✓ Age: 32 ≥ 18 ✓ (pass)
+    ? Land ownership: Unknown → Ask user
+  
+  Result: CONDITIONAL ELIGIBLE (70% match)
+
+Step 5: GET ADDITIONAL INFO (if needed)
+  If incomplete data:
+    - Orchestrator sends follow-up question to user
+    - "Do you own agricultural land?"
+
+Step 6: FETCH RELATED INFORMATION
+  Query Knowledge Graph:
+    - PM-KISAN details
+    - Related policies (PM-KISAN + Health Insurance bundle?)
+    - Documents required: Land records, ID proof, Bank account
+
+Step 7: FORMAT & RETURN RESPONSE
+  Response:
+  {
+    "status": "CONDITIONAL_ELIGIBLE",
+    "match_score": 0.7,
+    "reason": "Farmer, income within limit, age appropriate",
+    "missing_information": ["land_ownership"],
+    "eligible_schemes": [
+      {
+        "scheme_id": "PM-KISAN",
+        "name": "Pradhan Mantri Kisan Samman Nidhi",
+        "benefit": "₹6000/year",
+        "documents_required": ["Land records", "ID proof", "Bank account"],
+        "next_step": "Confirm land ownership"
+      },
+      {
+        "scheme_id": "PMSBY",
+        "name": "PM Suraksha Bima Yojana",
+        "benefit": "Insurance coverage ₹2 lakh"
+      }
+    ],
+    "ineligible_schemes": [],
+    "follow_up_questions": ["Do you own agricultural land?"]
+  }
+
+---
+
+WORKFLOW 2: POLICY EXPLANATION QUERY
+================================================================================
+User Input: "What are the benefits under Ayushman Bharat?"
+
+Step 1: INTENT DETECTION
+  Intent: "POLICY_EXPLANATION"
+  Entity: "Ayushman Bharat" (scheme name)
+
+Step 2: FETCH POLICY DATA
+  Query MongoDB:
+  {
+    "policy_id": "PMJAY001",
+    "name": "Pradhan Mantri Jan Arogya Yojana (Ayushman Bharat)",
+    "description": "Health insurance scheme for poor and vulnerable families",
+    "benefits": {
+      "coverage": "₹5 lakh per family per year",
+      "hospital_coverage": ["hospitalization", "pre-hospitalization expenses"],
+      "diseases_covered": ["cardiology", "oncology", "neurology", ...]
+    },
+    "eligibility": "SECC 2011 families",
+    "documents": ["AADHAR", "SECC family card"]
+  }
+
+Step 3: RETRIEVE SIMILAR POLICIES (RAG)
+  Embeddings query:
+    Query: "Ayushman Bharat benefits"
+    Retrieved top 3:
+      1. PMJAY (exact match)
+      2. RSBY (Related: insurance)
+      3. PMSBY (Related: insurance)
+
+Step 4: ROUTE TO AGENT + SELECT LLM
+  Selected Agent: Policy Explanation Agent
+  Selected LLM: GEMINI
+  Reason: Best for converting policy into simple language
+
+Step 5: BUILD PROMPT
+  Prompt:
+  ```
+  You are a welfare policy expert. Explain this government policy in very simple 
+  language for a non-technical Indian citizen:
+  
+  Policy: Pradhan Mantri Jan Arogya Yojana (Ayushman Bharat)
+  Coverage: ₹5 lakh per family per year
+  Coverage includes: Hospitalization, pre-hospitalization expenses
+  Diseases covered: Major illnesses (list below)
+  [diseases...]
+  
+  Format your response as:
+  1. What is Ayushman Bharat? (1 line)
+  2. Who can get it? (simple eligibility)
+  3. What does it cover? (bullet points)
+  4. What documents do I need? (list)
+  5. How do I apply? (simple steps)
+  6. Any limitations or exclusions? (important info)
+  
+  Use simple, everyday language. Avoid technical terms.
+  ```
+
+Step 6: GEMINI LLM GENERATES RESPONSE
+  Output:
+  ```
+  1. What is Ayushman Bharat?
+     A government health insurance that covers hospital treatment costs up to 
+     ₹5 lakh per year for free.
+  
+  2. Who can get it?
+     - Families listed in SECC 2011 census
+     - SC/ST families
+     - Low-income families (check eligibility with your state helpline)
+  
+  3. What does it cover?
+     - Hospital room, doctor fees, medicines, surgery
+     - Tests and treatments
+     - Pre-hospital medicines (7 days before)
+     - Post-hospital checks (15 days after)
+  
+  4. Documents needed?
+     - Aadhar card
+     - SECC card or ration card
+     - State ID (any one)
+  
+  5. How do I apply?
+     - Visit nearest Ayushman Bharat center
+     - Call 14555 (toll-free)
+     - Online at pmjay.gov.in
+  
+  6. Exclusions?
+     - OPD (outpatient) not covered
+     - Cosmetic surgery not covered
+     - Self-inflicted injuries
+  ```
+
+Step 7: ORCHESTRATOR AGGREGATES & RETURNS
+  Final Response:
+  {
+    "policy_name": "Ayushman Bharat",
+    "simple_explanation": "[GEMINI output above]",
+    "official_details": {
+      "ministry": "Ministry of Labour",
+      "coverage": "₹5 lakh/year"
+    },
+    "related_schemes": ["RSBY", "PMSBY"],
+    "quick_links": {
+      "apply": "pmjay.gov.in",
+      "helpline": "14555"
+    }
+  }
+
+---
+
+WORKFLOW 3: CLAIM GUIDANCE QUERY
+================================================================================
+User Input: "How do I claim Ayushman Bharat benefits?"
+
+Step 1: INTENT DETECTION
+  Intent: "CLAIM_GUIDANCE"
+  Entity: Ayushman Bharat
+
+Step 2: FETCH CLAIM WORKFLOW DATA
+  Query MongoDB claim_workflows collection
+  Get: Step-by-step claim process for PMJAY
+
+Step 3: GET USER CONTEXT (if logged in)
+  User profile: Already extracted/saved
+  Reason: Personalize steps with user info
+
+Step 4: ROUTE TO AGENT + SELECT LLM
+  Selected Agent: Claim Guidance Agent
+  Selected LLM: CLAUDE
+  Reason: Best for step-by-step guidance with nuance
+
+Step 5: BUILD PROMPT
+  Prompt:
+  ```
+  Generate a claim guide for Ayushman Bharat for a user:
+  
+  User Profile:
+  - Name: Rohit
+  - Age: 32
+  - Location: Tamil Nadu
+  - Eligibility: Confirmed eligible
+  
+  Create a step-by-step claim guide:
+  - Be very detailed
+  - Include documents needed at each step
+  - Include timelines
+  - Include common mistakes to avoid
+  - Include tips to get claim approved
+  - Format: Numbered steps with explanations
+  
+  Claim Process Overview:
+  [Fetch from database - standard steps]
+  ```
+
+Step 6: CLAUDE LLM GENERATES DETAILED RESPONSE
+  Output:
+  ```
+  STEP-BY-STEP CLAIM GUIDE FOR AYUSHMAN BHARAT
+  
+  STEP 1: Check Your Eligibility (Online)
+    What to do:
+      - Visit pmjay.gov.in or call 14555
+      - Verify if your name is in SECC database
+      - Note down your PMJAY ID if available
+    Documents needed: Aadhar or family ID
+    Timeline: 5 mins
+    Tip: Do this before requiring treatment to avoid delays
+  
+  STEP 2: Identify Empanelled Hospital
+    What to do:
+      - Search hospital list on pmjay app
+      - Call PMJAY helpline to confirm
+      - Choose hospital near your location
+    Why: Not all hospitals accept PMJAY
+    Timeline: 10 mins
+  
+  STEP 3: Visit Hospital with Documents
+    Bring:
+      - Original + xerox Aadhar
+      - PMJAY letter (if you have one)
+      - Prescription from doctor (if available)
+      - Any previous medical records
+    Timeline: Go before health worsens
+  
+  STEP 4: Hospital Registration
+    What happens:
+      - Hospital staff will register you
+      - Verify your SECC eligibility
+      - Generate PMJAY patient ID
+      - Get Aadhar OTP verification (sometimes)
+    Timeline: 30 mins
+    Mistake to avoid: Don't leave without getting confirmation
+  
+  STEP 5: Treatment & Hospitalization
+    What to do:
+      - Undergo recommended treatment
+      - Ask hospital for itemized bills (won't be much)
+      - Keep all receipts & documents
+    Cost to you: ₹0 (government pays)
+    Timeline: As per medical requirement
+  
+  STEP 6: Discharge & Documentation
+    Get from hospital:
+      - Discharge summary
+      - Prescription for follow-up
+      - Hospital receipt (clearly mentioning PMJAY)
+      - List of medicines administered
+    Timeline: Get before leaving hospital
+    Tip: If they ask for co-payment, refuse - PMJAY is free
+  
+  STEP 7: Post-Discharge Follow-up
+    What to do:
+      - Get medicines listed in discharge
+      - Visit prescribed doctor for follow-up
+      - Keep follow-up visits within 15 days (covered by PMJAY)
+      - Save all bills & receipts
+    Coverage: ₹500 daily for up to 15 days post-discharge
+    Timeline: Within 15 days of discharge
+  
+  COMMON MISTAKES TO AVOID:
+    ✗ Going to non-empanelled hospital
+    ✗ Forgetting to carry Aadhar
+    ✗ Not verifying eligibility beforehand
+    ✗ Accepting payment after discharge
+    ✗ Losing discharge documents
+  
+  SUCCESS PROBABILITY: 95% (with proper documentation)
+  ```
+
+Step 7: ORCHESTRATOR FORMATS & RETURNS
+  Final Response:
+  {
+    "claim_guide": "[CLAUDE output above]",
+    "critical_documents": ["Aadhar", "SECC letter", "Discharge summary"],
+    "timeline_estimate": "15 days post-treatment",
+    "success_probability": 0.95,
+    "next_steps": ["Eligibility verification", "Hospital selection"],
+    "support_contact": {
+      "toll_free": "14555",
+      "website": "pmjay.gov.in"
+    }
+  }
+
+---
+
+WORKFLOW 4: CONVERSATIONAL QUERY (Vague)
+================================================================================
+User Input: "Hey, I heard there's some scheme for farmers. What's it called?"
+
+Step 1: INTENT DETECTION
+  Intent: "UNCLEAR_SEARCH" / "INFORMATION_SEEKING"
+  Entity: "farmer scheme" (vague)
+  Confidence: 60% (unclear)
+
+Step 2: ROUTE TO VOICE/CONVERSATIONAL AGENT
+  Selected Agent: Voice/Conversational Agent
+  Selected LLM: LLAMA 80B
+  Reason: Best at understanding vague/casual queries
+
+Step 3: LLAMA PROCESSES QUERY
+  Prompt:
+  ```
+  User asked vaguely: "I heard there's some scheme for farmers. What's it called?"
+  
+  Your task:
+  1. Extract intent: What does user actually want?
+  2. Extract entities: Farmer, scheme, unclear what type
+  3. Ask clarifying questions
+  4. Suggest relevant schemes
+  
+  Farmer schemes in India:
+  - PM-KISAN (cash income)
+  - Pradhan Mantri Fasal Bima Yojana (crop insurance)
+  - Others...
+  
+  Response format: Conversational, ask 1-2 clarifying questions
+  ```
+
+Step 4: LLAMA RESPONSE
+  Output:
+  ```
+  I found several schemes for farmers! Let me narrow it down:
+  
+  Are you looking for:
+  1. Direct cash help? → PM-KISAN (₹6000/year)
+  2. Crop insurance? → Pradhan Mantri Fasal Bima Yojana
+  3. Loan/credit? → Kisan Credit Card
+  4. Something else?
+  
+  Quick info about PM-KISAN (most popular):
+  - ₹6000 per year in installments
+  - For small & marginal farmers
+  - Need to own agricultural land
+  
+  Which one sounds like what you're looking for?
+  ```
+
+Step 5: USER NARROWS DOWN
+  User responds: "Yeah, I think it's the cash one, PM-KISAN"
+
+Step 6: ORCHESTRATOR ROUTES TO NEXT AGENT
+  Now it's clear → Route to Policy Explanation Agent + Gemini
+  Fetch PM-KISAN details
+  Return comprehensive explanation
+
+================================================================================
+5. KNOWLEDGE BASE ARCHITECTURE
+================================================================================
+
+DB SCHEMA: MongoDB Collections
+
+COLLECTION 1: POLICIES
+{
+  "_id": ObjectId,
+  "policy_id": "PMJAY001",
+  "name": "Pradhan Mantri Jan Arogya Yojana",
+  "short_name": "Ayushman Bharat",
+  "ministry": "Ministry of Labour & Employment",
+  "department": "Department of Health",
+  "description": "Health insurance scheme for poor families",
+  "category": "Healthcare",
+  "sub_category": "Health Insurance",
+  "launch_year": 2018,
+  "target_beneficiaries": "50 crore people",
+  "benefits": {
+    "primary": "₹5 lakh health insurance",
+    "coverage_type": "Hospitalization",
+    "coverage_amount": 500000,
+    "frequency": "per family per year",
+    "diseases_covered": ["Cardiology", "Oncology", "Neurology", ...]
+  },
+  "eligibility": {
+    "criteria": [
+      {
+        "field": "family_in_secc",
+        "operator": "==",
+        "value": true
+      },
+      {
+        "field": "family_income",
+        "operator": "<=",
+        "value": 500000
+      },
+      {
+        "field": "apl_status",
+        "operator": "==",
+        "value": "bpl"
+      }
+    ]
+  },
+  "documents_required": [
+    {
+      "name": "Aadhar Card",
+      "mandatory": true,
+      "format": "Original + Xerox"
+    },
+    {
+      "name": "SECC 2011 Letter",
+      "mandatory": true
+    },
+    {
+      "name": "Family ID",
+      "mandatory": false
+    }
+  ],
+  "claim_process": [
+    {
+      "step": 1,
+      "title": "Eligibility Verification",
+      "description": "Check if eligible on pmjay.gov.in",
+      "timeline": "5 minutes"
+    },
+    {
+      "step": 2,
+      "title": "Hospital Selection",
+      "description": "Choose empanelled hospital",
+      "timeline": "10 minutes"
+    },
+    {
+      "step": 3,
+      "title": "Registration",
+      "description": "Hospital verifies eligibility",
+      "timeline": "30 minutes"
+    },
+    {
+      "step": 4,
+      "title": "Treatment",
+      "description": "Undergo recommended treatment",
+      "timeline": "As per medical need"
+    },
+    {
+      "step": 5,
+      "title": "Discharge",
+      "description": "Get discharge summary and bills",
+      "timeline": "Immediate"
+    }
+  ],
+  "frequently_asked_questions": [
+    {
+      "question": "Is this really free?",
+      "answer": "Yes, completely free. Government bears all costs."
+    }
+  ],
+  "related_policies": ["RSBY", "PMSBY", "NDHM"],
+  "state_specific": {
+    "TamilNadu": {
+      "helpline": "14555",
+      "website": "https://pmjay.tn.gov.in",
+      "status": "active"
+    },
+    "Karnataka": {
+      "helpline": "14555",
+      "website": "https://pmjay.kar.gov.in",
+      "status": "active"
+    }
+  },
+  "success_rate": 0.92,
+  "common_mistakes": [
+    "Going to non-empanelled hospital",
+    "Not carrying Aadhar card",
+    "Accepting cash payment from hospital"
+  ],
+  "llm_summary": "[Generated by Gemini - simple explanation]",
+  "embeddings": [0.234, 0.567, ...],  # Pre-computed for RAG
+  "last_updated": "2026-03-01"
+}
+
+---
+
+COLLECTION 2: ELIGIBILITY_RULES
+{
+  "_id": ObjectId,
+  "policy_id": "PM-KISAN",
+  "rule_name": "PM-KISAN Default Eligibility",
+  "rules": [
+    {
+      "field": "occupation",
+      "operator": "in",
+      "value": ["farmer", "agricultural_worker"],
+      "explanation": "Must be engaged in farming"
+    },
+    {
+      "field": "land_ownership",
+      "operator": "==",
+      "value": true,
+      "explanation": "Must own agricultural land"
+    },
+    {
+      "field": "annual_income",
+      "operator": "<=",
+      "value": 500000,
+      "explanation": "Annual income should not exceed ₹5 lakh"
+    },
+    {
+      "field": "age",
+      "operator": ">=",
+      "value": 18,
+      "explanation": "Must be 18 or above"
+    }
+  ],
+  "exclusion_criteria": [
+    {
+      "condition": "Already receiving pension benefit",
+      "reason": "Cannot double-dip"
+    }
+  ],
+  "scoring": {
+    "perfect_match": 1.0,
+    "partial_match": 0.5,
+    "no_match": 0.0
+  }
+}
+
+---
+
+COLLECTION 3: KNOWLEDGE_GRAPH
+{
+  "_id": ObjectId,
+  "source_policy": "PMJAY",
+  "relationship": "covers_same_area_as",
+  "target_policy": "RSBY",
+  "strength": 0.8,
+  "explanation": "Both are health insurance schemes for workers"
+}
+
+---
+
+COLLECTION 4: CLAIM_WORKFLOWS
+{
+  "_id": ObjectId,
+  "policy_id": "PMJAY001",
+  "workflow_type": "standard_hospitalization",
+  "steps": [
+    {Step 1-5 as detailed above}
+  ],
+  "average_timeline": "15 days",
+  "success_probability": 0.92,
+  "common_issues": [
+    {
+      "issue": "Hospital not empanelled",
+      "solution": "Verify on pmjay app before going"
+    }
+  ]
+}
+
+---
+
+COLLECTION 5: USER_SESSIONS
+{
+  "_id": ObjectId,
+  "user_id": "user123",
+  "session_id": "sess_abc123",
+  "conversation_history": [
+    {
+      "timestamp": "2026-03-01T10:00:00Z",
+      "role": "user",
+      "content": "Am I eligible for PM-KISAN?",
+      "agent_used": "voice_agent",
+      "llm_used": "llama_80b"
+    },
+    {
+      "timestamp": "2026-03-01T10:00:05Z",
+      "role": "assistant",
+      "content": "Let me check your eligibility...",
+      "agent_used": "eligibility_agent",
+      "llm_used": "rule_engine"
+    }
+  ],
+  "current_context": {
+    "last_policy_viewed": "PM-KISAN",
+    "eligibility_status": "ELIGIBLE",
+    "pending_actions": ["Complete claim form"]
+  },
+  "created_at": "2026-03-01T10:00:00Z",
+  "expires_at": "2026-03-02T10:00:00Z"
+}
+
+================================================================================
+6. RAG (RETRIEVAL-AUGMENTED GENERATION) SYSTEM
+================================================================================
+
+WHAT IS RAG?
+Retrieve relevant information from database BEFORE asking LLM to answer
+This ensures LLM generates answers based on actual policy data (not hallucinations)
+
+FLOW:
+User Query → Embed Query → Search Similar Policies → Get Top 5 → 
+Feed to LLM with Context → LLM Answers Based on Context
+
+IMPLEMENTATION:
+
+STEP 1: GENERATE EMBEDDINGS (One-time)
+  Input: All 100 policies
+  Process: Use Gemini Embeddings API
+  Output: Each policy gets 768-dimensional embedding vector
+  Storage: Store in MongoDB or embeddings_cache.pkl
+  
+  Code pseudocode:
+  ```
+  for policy in all_policies:
+    embedding = gemini_embeddings_api.embed(policy.text)
+    policy.embeddings = embedding
+    save_to_mongodb(policy)
+  ```
+
+STEP 2: QUERY TIME - EMBED USER QUERY
+  User Query: "What's the PM-KISAN scheme?"
+  Embedding: Convert to same vector space (768 dims)
+  
+  Code:
+  ```
+  query_embedding = gemini_embeddings_api.embed(user_query)
+  ```
+
+STEP 3: SIMILARITY SEARCH
+  Find Top-K similar policies using cosine similarity
+  
+  Cosine Similarity = (A · B) / (||A|| × ||B||)
+  
+  Result: Top 5 policies with similarity scores:
+    1. PM-KISAN: 0.92 similarity
+    2. PM-KISAN Benefits Expansion: 0.85 similarity
+    3. PMSBY: 0.72 similarity
+    4. RSBY: 0.68 similarity
+    5. Agriculture Insurance: 0.65 similarity
+
+STEP 4: CONTEXT BUILDING
+  Fetch full details of top 5 policies
+  Format context for LLM:
+  
+  ```
+  Context:
+  [Policy 1 details: PM-KISAN - Most relevant]
+  [Policy 2 details: PM-KISAN Expansion]
+  [Policy 3 details: PMSBY - Related]
+  ...
+  ```
+
+STEP 5: LLM GENERATION WITH CONTEXT
+  Prompt:
+  ```
+  Based on the following policies, answer the user question:
+  
+  CONTEXT:
+  [Full policy details from top 5 retrieved]
+  
+  USER QUESTION: "What's the PM-KISAN scheme?"
+  
+  ANSWER (in simple language):
+  ```
+
+STEP 6: RETURN ANSWER WITH ATTRIBUTION
+  Response:
+  ```
+  {
+    "answer": "[LLM generated answer]",
+    "source_policies": [
+      {"policy": "PM-KISAN", "relevance": 0.92},
+      {"policy": "PM-KISAN Benefits Expansion", "relevance": 0.85}
+    ],
+    "confidence": 0.98
+  }
+  ```
+
+BENEFITS OF RAG:
+✓ Answers grounded in actual policies (no hallucinations)
+✓ Can cite sources exactly
+✓ Consistent with current policy data
+✓ Easy to update (just update MongoDB, re-embed)
+✓ Auditable (can trace answer to source)
+
+================================================================================
+7. LLM SELECTION DECISION TREE
+================================================================================
+
+User Query Arrives
+    │
+    ├─ Is it eligibility-based?
+    │  └─ YES → ELIGIBILITY AGENT (Rule Engine, no LLM)
+    │
+    ├─ Is it asking "HOW" (procedural)?
+    │  └─ YES → CLAIM GUIDANCE AGENT → CLAUDE LLM
+    │              (Best for step-by-step instructions)
+    │
+    ├─ Is it asking "WHAT" or "EXPLAIN" (conceptual)?
+    │  └─ YES → POLICY EXPLANATION AGENT → GEMINI LLM
+    │              (Best for converting complex → simple)
+    │
+    ├─ Is it vague/conversational?
+    │  └─ YES → VOICE/CONVERSATIONAL AGENT → LLAMA 80B
+    │              (Best for NLU and casual language)
+    │
+    └─ Is it optimization/comparison?
+       └─ YES → BENEFIT OPTIMIZATION AGENT → GEMINI LLM
+                   (Best for ranking and explanations)
+
+================================================================================
+8. LLM FALLBACK MECHANISM
+================================================================================
+
+PRIMARY LLM FAILS → FALLBACK CHAIN
+
+Scenario: Gemini API timeout
+
+Flow:
+1. Try GEMINI → Timeout after 5 seconds
+2. Log error: "Gemini unavailable"
+3. Fallback to CLAUDE → Use same prompt
+4. If CLAUDE succeeds → Return response + log fallback
+5. If CLAUDE fails → Fallback to LLAMA 80B (local)
+6. If all fail → Return cached/template response
+
+Code Structure:
+```python
+def execute_policy_explanation(query):
+    try:
+        response = gemini_api.explain(query)
+        return response
+    except TimeoutError:
+        logger.warning("Gemini timeout, falling back to Claude")
+        try:
+            response = claude_api.explain(query)
+            return response
+        except Exception:
+            logger.warning("Claude failed, using Llama")
+            response = llama_local.explain(query)
+            return response
+    except Exception as e:
+        logger.error(f"All LLMs failed: {e}")
+        return get_template_response(query)
+```
+
+BENEFITS:
+✓ Reliability (if one LLM down, another takes over)
+✓ Cost optimization (try faster/cheaper first)
+✓ No single point of failure
+✓ Automatic degradation (graceful)
+
+================================================================================
+9. ORCHESTRATOR CLASS PSEUDOCODE
+================================================================================
+
+```python
+class BharatOrchestrator:
+    def __init__(self):
+        self.eligibility_agent = EligibilityAgent()
+        self.policy_agent = PolicyExplanationAgent()  # Gemini
+        self.guidance_agent = ClaimGuidanceAgent()    # Claude
+        self.voice_agent = VoiceAgent()               # Llama 80B
+        self.knowledge_base = KnowledgeBase()
+        self.rag_retriever = RAGRetriever()
+        self.session_manager = SessionManager()
+    
+    def process_query(self, user_query, user_id):
+        """Main orchestration method"""
+        
+        # Step 1: Parse query
+        intent, entities, confidence = self.analyze_intent(user_query)
+        
+        # Step 2: Load user context
+        user_profile = self.knowledge_base.get_user_profile(user_id)
+        session_state = self.session_manager.get_session_state(user_id)
+        
+        # Step 3: Retrieve relevant policies (RAG)
+        relevant_policies = self.rag_retriever.search(user_query, top_k=5)
+        
+        # Step 4: Select agent & LLM
+        agent, llm = self.select_agent_and_llm(intent, confidence)
+        
+        # Step 5: Execute agent
+        agent_result = agent.execute(
+            query=user_query,
+            user_profile=user_profile,
+            relevant_policies=relevant_policies,
+            llm=llm
+        )
+        
+        # Step 6: Aggregate & format response
+        response = self.aggregate_response(agent_result, relevant_policies)
+        
+        # Step 7: Update session state
+        self.session_manager.update_session(user_id, {
+            "last_query": user_query,
+            "last_agent": agent.name,
+            "last_llm": llm.name,
+            "context": agent_result
+        })
+        
+        return response
+    
+    def analyze_intent(self, query):
+        """Detect user intent"""
+        # Use Llama or Gemini to classify intent
+        # Return: intent type, extracted entities, confidence score
+        pass
+    
+    def select_agent_and_llm(self, intent, confidence):
+        """Route to best agent & LLM"""
+        routing_matrix = {
+            "ELIGIBILITY": (EligibilityAgent, RuleEngine),
+            "EXPLANATION": (PolicyExplanationAgent, Gemini),
+            "CLAIM_GUIDE": (ClaimGuidanceAgent, Claude),
+            "CONVERSATION": (VoiceAgent, Llama80B),
+            "OPTIMIZATION": (OptimizationAgent, Gemini)
+        }
+        return routing_matrix[intent]
+    
+    def aggregate_response(self, agent_result, relevant_policies):
+        """Format final response"""
+        return {
+            "answer": agent_result["output"],
+            "sources": relevant_policies,
+            "confidence": agent_result["confidence"],
+            "next_steps": agent_result.get("next_steps", []),
+            "related_schemes": self.get_related_schemes(relevant_policies)
+        }
+```
+
+================================================================================
+10. 7-DAY IMPLEMENTATION: LLM & ORCHESTRATION INTEGRATION
+================================================================================
+
+DAY 1: Environment Setup
+  - Install FastAPI, pymongo, openai, anthropic, llama_cpp
+  - Set up .env with API keys (GEMINI_KEY, CLAUDE_KEY)
+  - Create database schema in MongoDB
+  - Set up logging
+
+DAY 2: Knowledge Base + RAG
+  - Seed MongoDB with 100 policies
+  - Create eligibility rules JSON
+  - Generate embeddings for all policies (Gemini)
+  - Test RAG retrieval
+
+DAY 3: Orchestrator Core
+  - Build Orchestrator class
+  - Implement intent detection (Llama or simple classifier)
+  - Build agent selection logic
+  - Build session state manager
+
+DAY 3: LLM Integration
+  - Gemini client (Policy Explanation)
+  - Claude client (Claim Guidance)
+  - Llama client (local or API)
+  - Fallback chain implementation
+
+DAY 4: Agent Implementation
+  - Eligibility Agent (rule-based)
+  - Policy Explanation Agent + Gemini
+  - Claim Guidance Agent + Claude
+  - Voice Agent + Llama (skeleton)
+
+DAY 5: API Endpoints
+  - POST /api/v1/query (main orchestration)
+  - GET /api/v1/policies
+  - POST /api/v1/eligibility/check
+  - All fully functional
+
+DAY 6: Testing & Integration
+  - Test each agent independently
+  - Test orchestration end-to-end
+  - Test RAG retrieval accuracy
+  - Load test (multiple concurrent users)
+
+DAY 7: Polish & Documentation
+  - Performance optimization
+  - Error handling refinement
+  - API documentation (Swagger)
+  - Demo scenarios prepared
+
+================================================================================
+11. COST & PERFORMANCE CONSIDERATIONS
+================================================================================
+
+LLM API COSTS (Estimated for 7 days + hackathon):
+
+GEMINI:
+- Free tier: ~1M tokens/month
+- Estimated usage: Policy explanations (~100 queries)
+- Cost: FREE (within free tier)
+
+CLAUDE:
+- Pay-as-you-go: ~$0.003 per 1K input tokens
+- Estimated usage: Claim guides (~50 queries × 2000 tokens)
+- Cost: ~$0.30 (very cheap)
+
+LLAMA 80B:
+- If local: FREE (own hardware)
+- If API: ~$0.50/1M tokens
+- Estimated usage: Intent detection, conversation
+- Cost: ~$0.20 (very cheap)
+
+TOTAL 7-DAY COST: ~$0.50 (negligible)
+
+PERFORMANCE TARGETS:
+
+Query latency:
+- Intent detection: < 200ms
+- RAG retrieval: < 300ms
+- LLM generation: 2-5 seconds (Gemini/Claude) or < 1s (Llama local)
+- Total end-to-end: < 10 seconds
+
+Success rates:
+- Eligibility accuracy: > 95% (rule-based)
+- Policy explanation clarity: 90% (judged by users)
+- RAG retrieval relevance: > 90% (top-1 accuracy)
+
+================================================================================
+END OF LLM ORCHESTRATION STRATEGY DOCUMENT
+================================================================================

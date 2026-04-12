@@ -1,0 +1,19 @@
+{
+    "scheme_name": "Atal Pension Yojana (APY)",
+    "category": "Pension",
+    "benefit": [
+        "Central Government guaranteed minimum pension of Rs. 1000, Rs. 2000, Rs. 3000, Rs. 4000, or Rs. 5000 per month after the age of 60 years until death.",
+        "Spouse of the subscriber receives the same pension amount until their death after the subscriber's demise.",
+        "Nominee of the subscriber receives the accumulated pension wealth after the demise of both the subscriber and spouse.",
+        "If subscriber dies before 60 years, spouse has the option to continue contributing for the remaining vesting period to receive the pension.",
+        "Central Government funds any inadequacy if accumulated corpus earns a lower-than-estimated return to ensure minimum guaranteed pension.",
+        "Subscribers receive enhanced pensionary benefits if investment returns are higher."
+    ],
+    "eligibility": [
+        "All citizens of India.",
+        "Must have a savings bank account.",
+        "Minimum age of joining is 18 years.",
+        "Maximum age of joining is 40 years.",
+        "Not an income-tax payer (or has not been an income-tax payer) from 1st October, 2022."
+    ]
+}
