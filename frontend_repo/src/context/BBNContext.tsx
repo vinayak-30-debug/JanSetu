@@ -68,7 +68,7 @@ export const BBNProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [llmMode, setLlmMode] = useState<LLMMode>("auto");
     const [isLLMModeLoading, setIsLLMModeLoading] = useState(false);
     const [llmModeError, setLlmModeError] = useState<string | null>(null);
-    const [tempAadhaar, setTempAadhaar] = useState("");
+    const [activeCitizenId, setActiveCitizenId] = useState("");
     const [isApplying, setIsApplying] = useState(false);
 
     const resolveTemplateLanguage = (language: string) => {
@@ -402,12 +402,12 @@ export const BBNProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const normalizedAadhaar = (aadhaar || "").trim();
         setIsLoading(true);
         setError(null);
-        setTempAadhaar(normalizedAadhaar);
 
         try {
             const profile = await fetchCitizenProfile(normalizedAadhaar);
+            setActiveCitizenId(profile.citizen_id || "");
             setUserProfile(profile);
-            const initialResponse = await submitQuery("What benefits am I eligible for?", profile, "");
+            const initialResponse = await submitQuery("What benefits am I eligible for?", profile, profile.citizen_id || "");
             setQueryResponse(initialResponse);
 
             const monthlyBenefit = Number(
@@ -435,8 +435,8 @@ export const BBNProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             setUserProfile(null);
             setQueryResponse(null);
             setSelectedScheme(null);
-            openSmartIntake(null);
-            setError("Aadhaar not found. Please complete your profile.");
+            openSmartIntake({ aadhaar_masked: "XXXX-XXXX-XXXX", citizen_id: "", name: "", age: 0, ration_card: "None", monthly_income: 0, occupation: "", language: "English", state: "", caste: "General" });
+            setError("Verify the Aadhaar-linked mobile number to securely access your profile, or complete your profile.");
         } finally {
             setIsLoading(false);
         }
@@ -447,13 +447,13 @@ export const BBNProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         try {
             const normalizedProfile = {
                 ...profile,
-                aadhaar_no: tempAadhaar || profile.aadhaar_no,
+                citizen_id: activeCitizenId || profile.citizen_id,
                 state: profile.state,
                 caste: profile.caste,
                 language: selectedLanguage
             };
             setUserProfile(normalizedProfile);
-            const initialResponse = await submitQuery("What benefits am I eligible for?", normalizedProfile, tempAadhaar || profile.aadhaar_no);
+            const initialResponse = await submitQuery("What benefits am I eligible for?", normalizedProfile, activeCitizenId || profile.citizen_id);
             setQueryResponse(initialResponse);
 
             const monthlyBenefit = Number(
@@ -527,9 +527,9 @@ export const BBNProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             setIsLoading(true);
             setError(null);
             const effectiveProfile = profileOverride || userProfile;
-            const effectiveAadhaar = aadhaarOverride || tempAadhaar;
+            const effectiveCitizenId = aadhaarOverride || activeCitizenId || (effectiveProfile?.citizen_id ?? "");
 
-            const response = await submitQuery(query, effectiveProfile, effectiveAadhaar);
+            const response = await submitQuery(query, effectiveProfile, effectiveCitizenId);
             setQueryResponse(response);
             if (profileOverride) {
                 setUserProfile(profileOverride);

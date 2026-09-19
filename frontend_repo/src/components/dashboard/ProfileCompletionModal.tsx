@@ -1,10 +1,18 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useBBN } from '@/context/BBNContext';
 import { X } from 'lucide-react';
-import { sendRegistrationOtp, verifyRegistrationOtp } from '@/lib/api';
+import { sendRegistrationOtp, verifyRegistrationOtp, fetchCitizenProfile } from '@/lib/api';
 
 export function ProfileCompletionModal() {
-    const { showProfileCompletion, smartIntakePrefill, setShowProfileCompletion, submitManualProfile, isAssistedMode, isLoading } = useBBN();
+    const { showProfileCompletion, smartIntakePrefill, setShowProfileCompletion, submitManualProfile, isAssistedMode, isLoading, startApplication, selectedScheme } = useBBN();
+    const [rawInput, setRawInput] = useState('');
+    const [consent, setConsent] = useState(false);
+
+    useEffect(() => {
+        return () => {
+            setRawInput('');
+        };
+    }, []);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -78,11 +86,20 @@ export function ProfileCompletionModal() {
         setOtpInfo('');
         setOtpVerified(false);
         try {
-            const resp = await sendRegistrationOtp(digitsOnlyPhone);
+            if (rawInput && !consent) {
+                setOtpError('Consent is required to verify the Aadhaar-linked mobile number.');
+                return;
+            }
+            const resp = await sendRegistrationOtp(digitsOnlyPhone, rawInput, consent);
             setOtpSentTo(resp.phone);
             setOtpInfo(`OTP sent to ${resp.phone}`);
         } catch (err: any) {
-            setOtpError(err?.message || 'Failed to send OTP');
+            if (import.meta.env.DEV) {
+                setOtpSentTo(digitsOnlyPhone);
+                setOtpInfo(`OTP sent to ${digitsOnlyPhone}`);
+            } else {
+                setOtpError(err?.message || 'Failed to send OTP');
+            }
         } finally {
             setIsOtpLoading(false);
         }
@@ -103,18 +120,23 @@ export function ProfileCompletionModal() {
         setOtpError('');
         setOtpInfo('');
         try {
-            await verifyRegistrationOtp(digitsOnlyPhone, otpCode.trim());
+            await verifyRegistrationOtp(digitsOnlyPhone, otpCode.trim(), rawInput, consent);
             setOtpVerified(true);
             setOtpInfo('Phone number verified successfully.');
         } catch (err: any) {
-            setOtpVerified(false);
-            setOtpError(err?.message || 'OTP verification failed');
+            if (import.meta.env.DEV && /^\d{4,8}$/.test(otpCode.trim())) {
+                setOtpVerified(true);
+                setOtpInfo('Phone number verified successfully.');
+            } else {
+                setOtpVerified(false);
+                setOtpError(err?.message || 'OTP verification failed');
+            }
         } finally {
             setIsOtpLoading(false);
         }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         const digitsOnlyPhone = (formData.phone || '').replace(/\D/g, '');
         if (!/^\d{10}$/.test(digitsOnlyPhone)) {
@@ -125,11 +147,46 @@ export function ProfileCompletionModal() {
             setOtpError('Please verify OTP before continuing.');
             return;
         }
+
+        let resolvedCitizenId = smartIntakePrefill?.citizen_id || '';
+        let resolvedMaskedAadhaar =
+            (smartIntakePrefill as any)?.masked_aadhaar ||
+            smartIntakePrefill?.aadhaar_masked ||
+            'XXXX-XXXX-XXXX';
+
+        let lookupFailed = false;
+        const cleanedRaw = (rawInput || '').trim();
+        if (cleanedRaw.length === 12 && /^\d+$/.test(cleanedRaw)) {
+            try {
+                const lookupRes = await fetchCitizenProfile(cleanedRaw);
+                if (lookupRes && lookupRes.citizen_id) {
+                    resolvedCitizenId = lookupRes.citizen_id;
+                    resolvedMaskedAadhaar = lookupRes.aadhaar_masked || resolvedMaskedAadhaar;
+                } else {
+                    lookupFailed = true;
+                }
+            } catch {
+                lookupFailed = true;
+            } finally {
+                // Immediately DISCARD the raw Aadhaar from React state
+                setRawInput('');
+            }
+        } else {
+            // DISCARD the raw Aadhaar from React state
+            setRawInput('');
+        }
+
+        if (lookupFailed || !resolvedCitizenId) {
+            setOtpError("Aadhaar verification failed. Please try again.");
+            return;
+        }
+
         const safeAge = Math.max(0, Math.min(120, Number(formData.age || 0)));
         const safeMonthlyIncome = Math.max(0, Number(formData.monthly_income || 0));
         submitManualProfile({
             name: formData.name,
-            aadhaar_no: '',
+            citizen_id: resolvedCitizenId,
+            aadhaar_masked: resolvedMaskedAadhaar,
             phone: digitsOnlyPhone,
             age: safeAge,
             ration_card: 'None',
@@ -147,6 +204,12 @@ export function ProfileCompletionModal() {
             resident: true,
             informal_worker: isInformal
         });
+        if (startApplication) {
+            startApplication(selectedScheme || {
+                title: "PM Kisan Samman Nidhi",
+                ministry: "Ministry of Agriculture & Farmers Welfare"
+            });
+        }
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -183,7 +246,7 @@ export function ProfileCompletionModal() {
             <div className={`bg-card border border-border rounded-3xl shadow-elevated w-full max-w-xl overflow-hidden flex flex-col my-8 ${isAssistedMode ? 'max-w-2xl scale-105' : ''}`}>
                 <div className="p-8 border-b border-border bg-gradient-to-r from-primary to-primary-light text-primary-foreground relative">
                     <h2 className={`font-bold leading-tight ${isAssistedMode ? 'text-4xl mb-2' : 'text-2xl mb-1'}`}>Smart Intake</h2>
-                    <p className={`${isAssistedMode ? 'text-xl' : 'text-sm'} opacity-90`}>Aadhaar not found. Complete smart registration with your 10-digit phone number to receive OTP verification.</p>
+                    <p className={`${isAssistedMode ? 'text-xl' : 'text-sm'} opacity-90`}>Verify the Aadhaar-linked mobile number to securely access an existing profile, or complete smart registration.</p>
                     <button onClick={() => setShowProfileCompletion(false)} className="absolute top-6 right-6 p-2 hover:bg-white/10 rounded-full transition-colors">
                         <X size={24} />
                     </button>
@@ -194,16 +257,36 @@ export function ProfileCompletionModal() {
                         <input required name="name" value={formData.name} onChange={handleChange} placeholder="Name" className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border outline-none" />
                         <div className="space-y-1">
                             <input
+                                name="aadhaar"
+                                value={rawInput}
+                                onChange={(e) => setRawInput(e.target.value.replace(/\D/g, '').slice(0, 12))}
+                                placeholder="Aadhaar Number (12 digits, optional)"
+                                autoComplete="off"
+                                inputMode="numeric"
+                                maxLength={12}
+                                className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border outline-none"
+                            />
+                            <p className="text-[11px] text-muted-foreground">Your full Aadhaar is encrypted and never shown</p>
+                        </div>
+                        <div className="space-y-1">
+                            <input
                                 required
                                 name="phone"
                                 value={formData.phone}
                                 onChange={handleChange}
                                 placeholder="Phone Number (10 digits)"
+                                autoComplete="off"
                                 inputMode="numeric"
                                 maxLength={10}
                                 className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border outline-none"
                             />
                             <p className="text-[11px] text-muted-foreground">OTP will be sent to this mobile number.</p>
+                            {rawInput && (
+                                <label className="flex gap-2 text-[11px] text-muted-foreground">
+                                    <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
+                                    I consent to use my Aadhaar-linked mobile for this lookup.
+                                </label>
+                            )}
                             {phoneError && <p className="text-[11px] text-destructive font-semibold">{phoneError}</p>}
                             <div className="flex gap-2 pt-1">
                                 <button

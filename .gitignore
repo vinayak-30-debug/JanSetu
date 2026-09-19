@@ -2,4 +2,9 @@ venv/
 __pycache__/
 *.pyc
 .env
+firebase_credentials.json
+backend/firebase_credentials.json
+*.pem
+*.key
+backend/data/private/
 .DS_Store

@@ -4,6 +4,8 @@ from typing import Optional, Dict, Any, List
 from pymongo.errors import PyMongoError
 from ..policies.models import UserProfile
 from ..database import get_database
+from ..auth.pii_crypto import decrypt_record
+from ..auth.security import fingerprint
 
 
 class CitizenService:
@@ -21,7 +23,10 @@ class CitizenService:
         db = get_database()
         if db is not None:
             # Aadhaar may be stored as int or string depending on ingestion path.
-            query = {"Aadhaar_No": aadhaar_str}
+            # Production storage should use this keyed hash for lookup and keep all
+            # raw attributes inside encrypted_payload. Legacy plaintext support is
+            # retained only for the existing demo database.
+            query = {"Aadhaar_Hash": fingerprint(aadhaar_str)}
             if aadhaar_str.isdigit():
                 query_terms = []
                 for variant in CitizenService._aadhaar_variants(aadhaar_str):
@@ -33,6 +38,8 @@ class CitizenService:
                 query = {"$or": query_terms}
             try:
                 citizen_data = await db.citizens.find_one(query)
+                if citizen_data and citizen_data.get("encrypted_payload"):
+                    citizen_data = decrypt_record(citizen_data["encrypted_payload"])
             except PyMongoError:
                 # Mongo might be down locally; fall back to bundled citizens.json.
                 citizen_data = None
@@ -111,6 +118,29 @@ class CitizenService:
         return UserProfile(**profile_dict)
 
     @staticmethod
+    def encrypted_storage_document(citizen_data: Dict[str, Any]) -> Dict[str, str]:
+        """Create the only MongoDB shape permitted for newly persisted PII."""
+        from ..auth.pii_crypto import encrypt_record
+        aadhaar = str(citizen_data.get("Aadhaar_No", "")).strip()
+        if not aadhaar:
+            raise ValueError("Aadhaar_No is required to create a protected registry record")
+        return {"Aadhaar_Hash": fingerprint(aadhaar), "encrypted_payload": encrypt_record(citizen_data)}
+
+    @staticmethod
+    async def phone_matches_aadhaar(aadhaar_no: str, phone: str) -> bool:
+        """Confirm ownership using the registry's Aadhaar-linked mobile field.
+
+        Production records should be encrypted at rest and indexed only by a keyed
+        Aadhaar hash. The local JSON fallback exists solely for the demo dataset.
+        """
+        citizen = CitizenService._find_in_local_registry(str(aadhaar_no).strip())
+        if not citizen:
+            return False
+        expected = "".join(ch for ch in str(citizen.get("Phone_No", "")) if ch.isdigit())
+        supplied = "".join(ch for ch in str(phone) if ch.isdigit())[-10:]
+        return bool(citizen.get("Aadhaar_Linked_Mobile")) and expected[-10:] == supplied
+
+    @staticmethod
     def _find_in_local_registry(aadhaar_no: str) -> Optional[Dict[str, Any]]:
         if CitizenService._local_registry_by_aadhaar is None:
             CitizenService._local_registry_by_aadhaar = CitizenService._load_local_registry_index()
@@ -163,6 +193,11 @@ class CitizenService:
 
         index: Dict[str, Dict[str, Any]] = {}
         for citizen in citizens:
+            if citizen.get("encrypted_payload"):
+                try:
+                    citizen = decrypt_record(citizen["encrypted_payload"])
+                except ValueError:
+                    continue
             key = str(citizen.get("Aadhaar_No", "")).strip()
             if key:
                 index[key] = citizen

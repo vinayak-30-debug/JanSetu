@@ -6,6 +6,7 @@ from pathlib import Path
 class Settings(BaseSettings):
     APP_NAME: str = "Bharat Benefits Navigator"
     DEBUG: bool = True
+    FRONTEND_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173"
     
     # Database
     USE_MONGO: bool = True
@@ -20,7 +21,11 @@ class Settings(BaseSettings):
     
     # Auth
     FIREBASE_CREDENTIALS_PATH: str = "./firebase_credentials.json"
-    SECRET_KEY: str = "supersecret"
+    # Required outside local development. Use a long random value from a secret manager.
+    SECRET_KEY: str = ""
+    PII_ENCRYPTION_KEY: str = ""
+    AUTH_SESSION_TTL_MINUTES: int = 15
+    AUTH_RATE_LIMIT_PER_MINUTE: int = 5
 
     # OTP / Twilio
     TWILIO_ACCOUNT_SID: str = ""
@@ -40,6 +45,10 @@ class Settings(BaseSettings):
     
     class Config:
         env_file = str(Path(__file__).resolve().parents[1] / ".env")
+
+    @property
+    def cors_origins(self) -> list[str]:
+        return [origin.strip() for origin in self.FRONTEND_ORIGINS.split(",") if origin.strip()]
 
 @lru_cache()
 def get_settings():

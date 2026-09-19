@@ -269,7 +269,7 @@ export async function sendRegistrationOtp(phone: string): Promise<{ ok: boolean;
       body: JSON.stringify({ phone }),
     });
   } catch {
-    throw new Error(`Cannot reach backend at ${API_BASE}. Start backend and retry.`);
+    throw new Error(`Unable to reach server at ${API_BASE}. Start backend and retry.`);
   }
   const data = await parseJsonSafe(res);
   if (!res.ok) throw new Error(data?.detail || "Failed to send OTP");
@@ -288,7 +288,7 @@ export async function verifyRegistrationOtp(
       body: JSON.stringify({ phone, code }),
     });
   } catch {
-    throw new Error(`Cannot reach backend at ${API_BASE}. Start backend and retry.`);
+    throw new Error(`Unable to reach server at ${API_BASE}. Start backend and retry.`);
   }
   const data = await parseJsonSafe(res);
   if (!res.ok) throw new Error(data?.detail || "Failed to verify OTP");

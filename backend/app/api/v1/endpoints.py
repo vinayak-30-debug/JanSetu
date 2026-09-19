@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request, Response
 from pydantic import BaseModel
 from typing import Optional, Literal, Dict, Any
 import traceback
@@ -8,7 +8,11 @@ from ...orchestration.orchestrator import orchestrator
 from ...users.citizen_service import CitizenService
 from ...intelligence.llm_service import llm_service
 from ...auth.otp_service import OTPService
+from ...auth.audit import record_audit_event
+from ...auth.security import enforce_rate_limit, issue_aadhaar_session, mask_aadhaar, require_aadhaar_session
+from ...auth.citizen_id_registry import citizen_id_registry
 from ...policies.scheme_rules import get_rule_for_scheme, normalize_scheme_name
+from ...config import get_settings
 
 router = APIRouter()
 
@@ -16,7 +20,11 @@ router = APIRouter()
 class QueryRequest(BaseModel):
     query: str
     profile: Optional[UserProfile] = None
-    aadhaar_no: Optional[str] = None
+    citizen_id: Optional[str] = None
+
+
+class CitizenLookupRequest(BaseModel):
+    aadhaar_no: str
 
 
 class LLMModeRequest(BaseModel):
@@ -25,32 +33,44 @@ class LLMModeRequest(BaseModel):
 
 class SendOtpRequest(BaseModel):
     phone: str
+    aadhaar_no: Optional[str] = None
+    consent: bool = False
 
 
 class VerifyOtpRequest(BaseModel):
     phone: str
     code: str
+    aadhaar_no: Optional[str] = None
+    consent: bool = False
 
 
 @router.post("/query")
-async def main_query(request: QueryRequest):
+async def main_query(request: QueryRequest, http_request: Request):
     """
     Main entry point for BBN intelligence.
     Routes through RAG -> Eligibility -> Decision Layer -> LLM Explanation.
-    Supports Aadhaar-based profile auto-fetch if profile is not provided.
+    Accepts an opaque citizen_id (from /citizen/lookup) instead of raw Aadhaar.
     """
     try:
+        aadhaar_no: Optional[str] = None
+        if request.citizen_id:
+            aadhaar_no = citizen_id_registry.resolve(request.citizen_id)
+            if not aadhaar_no:
+                raise HTTPException(status_code=401, detail="citizen_id is invalid or expired. Please re-verify.")
+            enforce_rate_limit(http_request, "aadhaar_query")
+            require_aadhaar_session(http_request, aadhaar_no)
         profile = request.profile or UserProfile(user_id="guest")
         response = await orchestrator.run_query(
             request.query,
             profile,
-            request.aadhaar_no,
+            aadhaar_no,
         )
         return response
-    except Exception as e:
-        print("\nFULL ERROR TRACE BELOW\n")
+    except HTTPException:
+        raise
+    except Exception:
         traceback.print_exc()
-        raise e
+        raise HTTPException(status_code=500, detail="Unable to process this request")
 
 
 @router.get("/policies/search")
@@ -128,19 +148,31 @@ async def get_all_policies():
     }
 
 
-@router.get("/citizen/by-aadhaar/{aadhaar_no}")
-async def get_citizen_profile(aadhaar_no: str):
+@router.post("/citizen/lookup")
+async def citizen_lookup(request: CitizenLookupRequest, http_request: Request):
     """
-    Fetches a profile from the synthetic citizen registry by Aadhaar number.
-    Used for profile auto-population in the dashboard.
+    Securely looks up a citizen profile by Aadhaar number.
+    Aadhaar is accepted in the POST body (never in the URL).
+    Returns an opaque citizen_id for use in subsequent requests.
     """
+    aadhaar_no = (request.aadhaar_no or "").strip()
+    if not aadhaar_no:
+        raise HTTPException(status_code=400, detail="aadhaar_no is required")
+
+    enforce_rate_limit(http_request, "aadhaar_lookup")
+    require_aadhaar_session(http_request, aadhaar_no)
     profile = await CitizenService.get_by_aadhaar(aadhaar_no)
     if not profile:
+        await record_audit_event("aadhaar_lookup", aadhaar_no, "not_found")
         raise HTTPException(status_code=404, detail="Citizen not found in registry")
 
+    await record_audit_event("aadhaar_lookup", aadhaar_no, "success")
+    citizen_id = citizen_id_registry.register(aadhaar_no)
+
     return {
+        "citizen_id": citizen_id,
         "name": profile.name,
-        "aadhaar_no": profile.aadhaar_no,
+        "aadhaar_masked": mask_aadhaar(aadhaar_no),
         "age": profile.age,
         "state": profile.state,
         "caste": profile.caste or "General",
@@ -164,12 +196,20 @@ async def set_llm_mode(request: LLMModeRequest):
 
 
 @router.post("/auth/send-otp")
-async def send_otp(request: SendOtpRequest):
+async def send_otp(request: SendOtpRequest, http_request: Request):
     try:
+        enforce_rate_limit(http_request, "otp_send")
+        if request.aadhaar_no and not request.consent:
+            raise HTTPException(status_code=400, detail="Consent is required to verify a linked mobile number")
+        if request.aadhaar_no and not await CitizenService.phone_matches_aadhaar(request.aadhaar_no, request.phone):
+            await record_audit_event("otp_send", request.aadhaar_no, "phone_mismatch")
+            raise HTTPException(status_code=403, detail="The mobile number cannot be verified for this Aadhaar")
         sent, normalized_phone = OTPService.send_otp(request.phone)
         if not sent:
             raise HTTPException(status_code=500, detail="Failed to send OTP")
-        return {"ok": True, "phone": normalized_phone, "message": "OTP sent"}
+        if request.aadhaar_no:
+            await record_audit_event("otp_send", request.aadhaar_no, "sent")
+        return {"ok": True, "phone": normalized_phone[-4:].rjust(len(normalized_phone), "*"), "message": "OTP sent"}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except RuntimeError as e:
@@ -180,12 +220,26 @@ async def send_otp(request: SendOtpRequest):
 
 
 @router.post("/auth/verify-otp")
-async def verify_otp(request: VerifyOtpRequest):
+async def verify_otp(request: VerifyOtpRequest, response: Response, http_request: Request):
     try:
+        enforce_rate_limit(http_request, "otp_verify")
+        if request.aadhaar_no and not request.consent:
+            raise HTTPException(status_code=400, detail="Consent is required to continue")
+        if request.aadhaar_no and not await CitizenService.phone_matches_aadhaar(request.aadhaar_no, request.phone):
+            await record_audit_event("otp_verify", request.aadhaar_no, "phone_mismatch")
+            raise HTTPException(status_code=403, detail="The mobile number cannot be verified for this Aadhaar")
         verified, normalized_phone = OTPService.verify_otp(request.phone, request.code)
         if not verified:
+            if request.aadhaar_no:
+                await record_audit_event("otp_verify", request.aadhaar_no, "failed")
             raise HTTPException(status_code=400, detail="Invalid or expired OTP")
-        return {"ok": True, "phone": normalized_phone, "verified": True}
+        if request.aadhaar_no:
+            token = issue_aadhaar_session(normalized_phone, request.aadhaar_no)
+            settings = get_settings()
+            response.set_cookie("jansetu_aadhaar_session", token, httponly=True, secure=not settings.DEBUG,
+                                samesite="strict", max_age=settings.AUTH_SESSION_TTL_MINUTES * 60)
+            await record_audit_event("otp_verify", request.aadhaar_no, "verified")
+        return {"ok": True, "phone": normalized_phone[-4:].rjust(len(normalized_phone), "*"), "verified": True}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except RuntimeError as e:

@@ -10,6 +10,7 @@ from ..intelligence.prediction_service import prediction_service
 from ..utils.rag_retriever import rag_retriever
 from ..policies.models import UserProfile, Policy
 from ..policies.scheme_rules import get_rule_for_scheme
+from ..auth.security import mask_aadhaar
 
 
 class BharatOrchestrator:
@@ -62,7 +63,7 @@ class BharatOrchestrator:
                 profile = registry_profile
                 print(
                     f"Orchestrator: Using registry profile for "
-                    f"{profile.name} (Aadhaar: {aadhaar_no})"
+                    f"{profile.name} (Aadhaar: {mask_aadhaar(aadhaar_no)})"
                 )
 
         # If core profile is incomplete, ask only missing required fields.

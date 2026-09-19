@@ -24,7 +24,33 @@ export function ApplyNowPage() {
     "Income Certificate",
   ]);
 
-  if (!selectedScheme || !userProfile) return null;
+  if (!userProfile || !selectedScheme) {
+    return (
+      <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-md flex items-center justify-center p-6 animate-fade-in">
+        <div className="bg-card border border-border rounded-2xl p-8 max-w-md w-full text-center space-y-4 shadow-elevated">
+          <div className="w-16 h-16 bg-destructive/10 text-destructive rounded-full flex items-center justify-center mx-auto">
+            <FileText size={32} />
+          </div>
+          <h2 className="text-xl font-bold text-foreground">No Active Application</h2>
+          <p className="text-sm text-muted-foreground">
+            Please complete your profile and select a scheme before proceeding to the application.
+          </p>
+          <button
+            onClick={cancelApplication}
+            className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-opacity"
+          >
+            Return to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const citizen_id = userProfile.citizen_id || (userProfile as any).id || "";
+  const masked_aadhaar =
+    (userProfile as any).masked_aadhaar ||
+    userProfile.aadhaar_masked ||
+    (citizen_id ? `XXXX-XXXX-${citizen_id.slice(-4)}` : "XXXX-XXXX-XXXX");
 
   const scanDocument = (docName: string) => {
     setIsScanning(docName);
@@ -202,7 +228,10 @@ export function ApplyNowPage() {
                           Aadhaar Number
                         </p>
                         <p className="text-lg font-mono font-bold tracking-tighter">
-                          XXXX-XXXX-{userProfile.aadhaar_no.slice(-4)}
+                          {masked_aadhaar}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground mt-1">
+                          Your full Aadhaar is encrypted and never shown
                         </p>
                       </div>
                     </div>
