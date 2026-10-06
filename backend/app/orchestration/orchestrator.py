@@ -227,10 +227,14 @@ class BharatOrchestrator:
                 profile=profile
             )
 
-            final_explanation = explanation_data.get("content", "")
-            reasoning_details = explanation_data.get(
-                "reasoning_details"
-            )
+            if isinstance(explanation_data, dict):
+                final_explanation = explanation_data.get("content", "")
+                reasoning_details = explanation_data.get(
+                    "reasoning_details"
+                )
+            else:
+                final_explanation = str(explanation_data or "")
+                reasoning_details = None
 
         # 7. Inclusive Pathway Detection
         pathway_context = PathwayDetector.detect_pathway(profile)
@@ -290,7 +294,8 @@ class BharatOrchestrator:
                 "total_benefit_value", 0.0
             ),
             "ml_prediction": {
-                "approval_likelihood": ml_score
+                "approval_likelihood": ml_score,
+                "impact_analysis": impact_analysis,
             },
             "decision_output": {
                 "document_advice": rta_summary.get(
@@ -299,7 +304,10 @@ class BharatOrchestrator:
             },
             "explanation": final_explanation,
             "reasoning_details": reasoning_details,
-            "recommended_schemes": []
+            "recommended_schemes": [],
+            "pathway_context": pathway_context,
+            "rta_summary": rta_summary,
+            "simplified_rta": simplified_rta,
         }
         return self._json_safe(payload)
 

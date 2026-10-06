@@ -6,9 +6,11 @@ from unittest.mock import MagicMock, AsyncMock
 # Add project root to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), ".")))
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
 # Mock heavy dependencies BEFORE importing orchestrator to avoid slow loads
 from unittest.mock import MagicMock, AsyncMock, patch
-import sys
 
 # Mocking sentence_transformers and other heavy AI libs
 sys.modules["sentence_transformers"] = MagicMock()
@@ -26,6 +28,7 @@ async def verify_openrouter_flow():
     user = UserProfile(
         user_id="test-123",
         name="Test Citizen",
+        gender="Male",
         age=30,
         income=5000,
         occupation="Farmer",
@@ -48,12 +51,28 @@ async def verify_openrouter_flow():
     
     # Mock RAG to return a dummy policy
     import backend.app.utils.rag_retriever as rag
-    rag.rag_retriever.retrieve = MagicMock(return_value=[{
-        "scheme_name": "PM-KISAN",
-        "benefit": "₹6000 per year",
-        "eligibility": ["Farmer", "Land ownership"],
-        "category": "Agriculture"
-    }])
+    dummy_policy = {
+        "policy_id": "PM-KISAN-001",
+        "name": "PM-KISAN",
+        "description": "Income support scheme for farmers providing Rs 6000 annually.",
+        "ministry": "Ministry of Agriculture & Farmers Welfare",
+        "category": "Agriculture",
+        "benefits": {"amount": 6000, "details": "₹6000 per year in 3 installments"},
+        "eligibility_criteria": {
+            "min_age": 18,
+            "max_age": 100,
+            "income_limit": 1000000,
+            "required_occupations": ["Farmer", "any"],
+            "required_states": ["all"],
+            "required_documents": ["Aadhar Card"]
+        },
+        "application_process": [
+            "Register on PM-KISAN portal",
+            "Verify Aadhaar details"
+        ]
+    }
+    rag.rag_retriever.retrieve = MagicMock(return_value=[dummy_policy])
+    rag.rag_retriever.retrieve_state_scope = MagicMock(return_value=[])
     
     # 3. Execution
     print("Running query: 'I am a farmer, what can I get?'")

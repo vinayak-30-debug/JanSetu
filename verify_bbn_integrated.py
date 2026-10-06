@@ -4,6 +4,9 @@ import asyncio
 import json
 from unittest.mock import MagicMock, AsyncMock
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
 # Add backend to path
 sys.path.append(os.getcwd())
 sys.path.append(os.path.join(os.getcwd(), "backend"))
@@ -36,6 +39,7 @@ async def main():
         "Citizen_ID": "BBN-AND-16693",
         "Aadhaar_No": aadhaar_rohit,
         "Full_Name": "Rohit Nair",
+        "Gender": "Male",
         "Age": 80,
         "State": "Andhra Pradesh",
         "Annual_Income": 50000,
@@ -53,20 +57,36 @@ async def main():
 
     # 4. Mock RAG to return a Senior/Disability Policy
     senior_policy = {
-        "scheme_name": "National Social Assistance Programme (NSAP) - Old Age & Disability",
+        "policy_id": "NSAP-001",
+        "name": "National Social Assistance Programme (NSAP) - Old Age & Disability",
+        "description": "Monthly pension for seniors and persons with disabilities.",
+        "ministry": "Ministry of Rural Development",
         "category": "Social Security",
-        "benefit": "Monthly pension for seniors and persons with disabilities.",
-        "eligibility": [
-            "Aadhar Card",
-            "Disability Certificate",
-            "Income Certificate"
-        ],
+        "benefits": {"details": "Monthly pension for seniors and persons with disabilities.", "amount": 1000},
+        "eligibility_criteria": {
+            "min_age": 60,
+            "max_age": 100,
+            "income_limit": 100000,
+            "required_occupations": ["any", "retired"],
+            "required_states": ["all"],
+            "required_documents": [
+                "Aadhar Card",
+                "Disability Certificate",
+                "Income Certificate"
+            ]
+        },
         "application_process": ["Apply at local Gram Panchayat", "Submit certificates"]
     }
     mock_rag.retrieve.return_value = [senior_policy]
+    mock_rag.retrieve_state_scope.return_value = []
     
     # Mock Explanation Agent
-    orchestrator.explanation_agent.execute = AsyncMock(return_value="Logic verified: Rohit is eligible for NSAP due to age (80) and disability.")
+    orchestrator.explanation_agent.execute = AsyncMock(
+        return_value={
+            "content": "Logic verified: Rohit is eligible for NSAP due to age (80) and disability.",
+            "reasoning_details": "Age 80 and disability verified"
+        }
+    )
 
     print(f"Simulating Enter Aadhaar: {aadhaar_rohit}")
     

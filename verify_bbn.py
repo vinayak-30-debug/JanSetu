@@ -4,6 +4,9 @@ import asyncio
 import json
 from unittest.mock import MagicMock, AsyncMock
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
 # Add backend to path
 sys.path.append(os.getcwd())
 sys.path.append(os.path.join(os.getcwd(), "backend"))
@@ -31,17 +34,41 @@ async def main():
     # Use Rohit (farmer) - citizen_001
     rohit = UserProfile(**citizens[0])
     
-    # Load standardized PM-KISAN
+    # Load and normalize PM-KISAN
     pm_kisan_path = os.path.join("backend", "data", "knowledge_base", "central", "pradhan_mantri_kisan_samman_nidhi_(pm-kisan).json")
-    with open(pm_kisan_path, "r") as f:
-        pm_kisan_data = json.load(f)
+    with open(pm_kisan_path, "r", encoding="utf-8") as f:
+        raw_pm_kisan = json.load(f)
+
+    pm_kisan_policy = {
+        "policy_id": "PM-KISAN-001",
+        "name": raw_pm_kisan.get("scheme_name", "Pradhan Mantri Kisan Samman Nidhi (PM-KISAN)"),
+        "description": raw_pm_kisan.get("benefit", "Income support for farmer families"),
+        "ministry": "Ministry of Agriculture & Farmers Welfare",
+        "category": raw_pm_kisan.get("category", "Farmer"),
+        "benefits": {"details": raw_pm_kisan.get("benefit", ""), "amount": 6000},
+        "eligibility_criteria": {
+            "min_age": 18,
+            "max_age": 100,
+            "income_limit": 1000000,
+            "required_occupations": ["farmer", "any"],
+            "required_states": ["all"],
+            "required_documents": raw_pm_kisan.get("eligibility", ["Aadhar Card", "Land Records", "Bank Account Details"])
+        },
+        "application_process": raw_pm_kisan.get("application_process", [])
+    }
     
     # 3. CONFIGURE MOCKS
     # Mock RAG to return PM-KISAN
-    mock_rag.retrieve.return_value = [pm_kisan_data]
+    mock_rag.retrieve.return_value = [pm_kisan_policy]
+    mock_rag.retrieve_state_scope.return_value = []
     
     # Mock Explanation Agent
-    orchestrator.explanation_agent.execute = AsyncMock(return_value="Mocked Explanation for PM-KISAN.")
+    orchestrator.explanation_agent.execute = AsyncMock(
+        return_value={
+            "content": "Mocked Explanation for PM-KISAN.",
+            "reasoning_details": "PM-KISAN verified for farmer"
+        }
+    )
 
     print(f"--- BBN STUBBED VERIFICATION START ---")
     print(f"Testing for Citizen: {rohit.name}")
