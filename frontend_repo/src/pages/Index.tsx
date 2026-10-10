@@ -15,6 +15,7 @@ import { ProfileCompletionModal } from "@/components/dashboard/ProfileCompletion
 import { ApplyNowPage } from "@/components/dashboard/ApplyNowPage";
 import { RTAPanel } from "@/components/dashboard/RTAPanel";
 import { AllSchemesPanel } from "@/components/dashboard/AllSchemesPanel";
+import { AadhaarDataVaultModal } from "@/components/dashboard/AadhaarDataVaultModal";
 import { useBBN } from "@/context/BBNContext";
 
 const Index = () => {
@@ -79,6 +80,7 @@ const Index = () => {
 
       <SchemeDetailsModal />
       <ProfileCompletionModal />
+      <AadhaarDataVaultModal />
       {isApplying && <ApplyNowPage />}
     </div>
   );

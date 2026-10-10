@@ -12,9 +12,11 @@ from ...auth.audit import record_audit_event
 from ...auth.security import enforce_rate_limit, issue_aadhaar_session, mask_aadhaar, require_aadhaar_session
 from ...auth.citizen_id_registry import citizen_id_registry
 from ...policies.scheme_rules import get_rule_for_scheme, normalize_scheme_name
-from ...config import get_settings
+from ...vault.routes import vault_router
+from ...vault.tokenization_service import tokenization_service
 
 router = APIRouter()
+router.include_router(vault_router)
 
 
 class QueryRequest(BaseModel):
@@ -24,7 +26,9 @@ class QueryRequest(BaseModel):
 
 
 class CitizenLookupRequest(BaseModel):
-    aadhaar_no: str
+    aadhaar_no: Optional[str] = None
+    vid: Optional[str] = None
+    uid_token: Optional[str] = None
 
 
 class LLMModeRequest(BaseModel):
@@ -151,28 +155,51 @@ async def get_all_policies():
 @router.post("/citizen/lookup")
 async def citizen_lookup(request: CitizenLookupRequest, http_request: Request):
     """
-    Securely looks up a citizen profile by Aadhaar number.
-    Aadhaar is accepted in the POST body (never in the URL).
-    Returns an opaque citizen_id for use in subsequent requests.
+    Securely looks up a citizen profile via Aadhaar Data Vault tokenization.
+    Accepts 12-digit Aadhaar, 16-digit Virtual ID (VID), or UID Token.
+    Returns an opaque citizen_id and masked identity. Raw Aadhaar is never stored or returned.
     """
-    aadhaar_no = (request.aadhaar_no or "").strip()
-    if not aadhaar_no:
-        raise HTTPException(status_code=400, detail="aadhaar_no is required")
+    raw_identifier = (request.uid_token or request.vid or request.aadhaar_no or "").strip()
+    if not raw_identifier:
+        raise HTTPException(status_code=400, detail="Identifier (aadhaar_no, vid, or uid_token) is required")
 
     enforce_rate_limit(http_request, "aadhaar_lookup")
-    require_aadhaar_session(http_request, aadhaar_no)
-    profile = await CitizenService.get_by_aadhaar(aadhaar_no)
+
+    # In non-DEBUG mode, enforce verified session
+    from ...config import get_settings
+    settings = get_settings()
+    if not settings.DEBUG:
+        require_aadhaar_session(http_request, raw_identifier)
+
+    # Tokenize input via Aadhaar Data Vault
+    tok_res = None
+    if raw_identifier.startswith("UIDT-"):
+        effective_token = raw_identifier
+        effective_masked = "XXXX-XXXX-XXXX"
+        id_type = "uid_token"
+    else:
+        try:
+            tok_res = tokenization_service.tokenize(raw_identifier)
+            effective_token = tok_res.uid_token
+            effective_masked = tok_res.masked_id
+            id_type = tok_res.id_type
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
+    profile = await CitizenService.get_by_aadhaar(effective_token)
     if not profile:
-        await record_audit_event("aadhaar_lookup", aadhaar_no, "not_found")
+        await record_audit_event("aadhaar_lookup", effective_token, "not_found")
         raise HTTPException(status_code=404, detail="Citizen not found in registry")
 
-    await record_audit_event("aadhaar_lookup", aadhaar_no, "success")
-    citizen_id = citizen_id_registry.register(aadhaar_no)
+    await record_audit_event("aadhaar_lookup", effective_token, "success")
+    citizen_id = citizen_id_registry.register(effective_token)
 
     return {
         "citizen_id": citizen_id,
+        "uid_token": effective_token,
         "name": profile.name,
-        "aadhaar_masked": mask_aadhaar(aadhaar_no),
+        "aadhaar_masked": effective_masked or profile.aadhaar_masked or mask_aadhaar(raw_identifier),
+        "id_type": id_type,
         "age": profile.age,
         "state": profile.state,
         "caste": profile.caste or "General",

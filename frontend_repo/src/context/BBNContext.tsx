@@ -43,6 +43,10 @@ interface BBNContextType {
         profileOverride?: CitizenProfile | null,
         aadhaarOverride?: string
     ) => Promise<void>;
+    isVaultModalOpen: boolean;
+    openVaultModal: () => void;
+    closeVaultModal: () => void;
+    toggleVaultModal: () => void;
     isApplying: boolean;
     startApplication: (scheme: any) => void;
     cancelApplication: () => void;
@@ -64,11 +68,16 @@ export const BBNProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [selectedScheme, setSelectedScheme] = useState<any | null>(null);
     const [showSchemeDetails, setShowSchemeDetails] = useState(false);
     const [showProfileCompletion, setShowProfileCompletion] = useState(false);
+    const [isVaultModalOpen, setIsVaultModalOpen] = useState(false);
     const [activeTab, setActiveTab] = useState("Dashboard");
     const [llmMode, setLlmMode] = useState<LLMMode>("auto");
     const [isLLMModeLoading, setIsLLMModeLoading] = useState(false);
     const [llmModeError, setLlmModeError] = useState<string | null>(null);
     const [activeCitizenId, setActiveCitizenId] = useState("");
+
+    const openVaultModal = () => setIsVaultModalOpen(true);
+    const closeVaultModal = () => setIsVaultModalOpen(false);
+    const toggleVaultModal = () => setIsVaultModalOpen((prev) => !prev);
     const [isApplying, setIsApplying] = useState(false);
 
     const resolveTemplateLanguage = (language: string) => {
@@ -405,9 +414,10 @@ export const BBNProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
         try {
             const profile = await fetchCitizenProfile(normalizedAadhaar);
-            setActiveCitizenId(profile.citizen_id || "");
+            const resolvedId = profile.uid_token || profile.citizen_id || "";
+            setActiveCitizenId(resolvedId);
             setUserProfile(profile);
-            const initialResponse = await submitQuery("What benefits am I eligible for?", profile, profile.citizen_id || "");
+            const initialResponse = await submitQuery("What benefits am I eligible for?", profile, resolvedId);
             setQueryResponse(initialResponse);
 
             const monthlyBenefit = Number(
@@ -610,6 +620,10 @@ export const BBNProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             submitManualProfile,
             runQuery,
             isApplying,
+            isVaultModalOpen,
+            openVaultModal,
+            closeVaultModal,
+            toggleVaultModal,
             startApplication,
             cancelApplication,
             toggleAssistedMode,

@@ -156,11 +156,11 @@ export function ProfileCompletionModal() {
 
         let lookupFailed = false;
         const cleanedRaw = (rawInput || '').trim();
-        if (cleanedRaw.length === 12 && /^\d+$/.test(cleanedRaw)) {
+        if ((cleanedRaw.length === 12 || cleanedRaw.length === 16) && /^\d+$/.test(cleanedRaw)) {
             try {
                 const lookupRes = await fetchCitizenProfile(cleanedRaw);
-                if (lookupRes && lookupRes.citizen_id) {
-                    resolvedCitizenId = lookupRes.citizen_id;
+                if (lookupRes && (lookupRes.citizen_id || (lookupRes as any).uid_token)) {
+                    resolvedCitizenId = (lookupRes as any).uid_token || lookupRes.citizen_id;
                     resolvedMaskedAadhaar = lookupRes.aadhaar_masked || resolvedMaskedAadhaar;
                 } else {
                     lookupFailed = true;
@@ -168,7 +168,7 @@ export function ProfileCompletionModal() {
             } catch {
                 lookupFailed = true;
             } finally {
-                // Immediately DISCARD the raw Aadhaar from React state
+                // Immediately DISCARD the raw Aadhaar/VID from React state
                 setRawInput('');
             }
         } else {
@@ -259,14 +259,14 @@ export function ProfileCompletionModal() {
                             <input
                                 name="aadhaar"
                                 value={rawInput}
-                                onChange={(e) => setRawInput(e.target.value.replace(/\D/g, '').slice(0, 12))}
-                                placeholder="Aadhaar Number (12 digits, optional)"
+                                onChange={(e) => setRawInput(e.target.value.replace(/\D/g, '').slice(0, 16))}
+                                placeholder="Aadhaar (12 digits) or VID (16 digits)"
                                 autoComplete="off"
                                 inputMode="numeric"
-                                maxLength={12}
+                                maxLength={16}
                                 className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border outline-none"
                             />
-                            <p className="text-[11px] text-muted-foreground">Your full Aadhaar is encrypted and never shown</p>
+                            <p className="text-[11px] text-emerald-400 font-medium">🔒 Protected by Aadhaar Data Vault (AES-256 + HSM Enclave)</p>
                         </div>
                         <div className="space-y-1">
                             <input

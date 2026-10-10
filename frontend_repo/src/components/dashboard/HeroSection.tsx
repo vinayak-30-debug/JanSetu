@@ -1,4 +1,4 @@
-import { Search, Mic } from "lucide-react";
+import { Search, Mic, ShieldCheck, Lock } from "lucide-react";
 import { useState } from "react";
 import { useBBN } from "@/context/BBNContext";
 import { mockProfile } from "@/lib/api";
@@ -57,7 +57,7 @@ export function HeroSection({ showSearch = true }: HeroSectionProps) {
   const [inputValue, setInputValue] = useState("");
   const [isListening, setIsListening] = useState(false);
   const [validationError, setValidationError] = useState("");
-  const { userProfile, setAadhaar, runQuery, openSmartIntake, isLoading } = useBBN();
+  const { userProfile, setAadhaar, runQuery, openSmartIntake, isLoading, openVaultModal } = useBBN();
   const { t } = useI18n();
 
   const startListening = () => {
@@ -76,17 +76,17 @@ export function HeroSection({ showSearch = true }: HeroSectionProps) {
     setValidationError("");
     const cleanedInput = inputValue.replace(/\s/g, "");
 
-    // Aadhaar flow: fetch profile and show real citizen name in greeting.
-    if (/^\d{12}$/.test(cleanedInput)) {
+    // Aadhaar flow (12 digits) or Virtual ID (16 digits) via Aadhaar Data Vault
+    if (/^\d{12}$/.test(cleanedInput) || /^\d{16}$/.test(cleanedInput)) {
       await setAadhaar(cleanedInput);
       return;
     }
-    if (/^\d+$/.test(cleanedInput) && cleanedInput.length !== 12) {
-      setValidationError("Aadhaar number must be exactly 12 digits.");
+    if (/^\d+$/.test(cleanedInput) && cleanedInput.length !== 12 && cleanedInput.length !== 16) {
+      setValidationError("Please enter a valid 12-digit Aadhaar number or 16-digit Virtual ID (VID).");
       return;
     }
-    if (/^[A-Za-z0-9]+$/.test(cleanedInput) && cleanedInput.length <= 12) {
-      setValidationError("Please enter a valid 12-digit Aadhaar number.");
+    if (/^[A-Za-z0-9]+$/.test(cleanedInput) && cleanedInput.length <= 16 && !inputValue.includes(" ")) {
+      setValidationError("Please enter a valid 12-digit Aadhaar number or 16-digit Virtual ID (VID).");
       return;
     }
 
@@ -145,6 +145,21 @@ export function HeroSection({ showSearch = true }: HeroSectionProps) {
             <Mic size={18} />
           </button>
         </form>
+      )}
+      {showSearch && (
+        <div className="mt-2 flex items-center justify-between text-[11px] px-1 text-muted-foreground">
+          <button
+            type="button"
+            onClick={openVaultModal}
+            className="inline-flex items-center gap-1.5 hover:text-emerald-400 text-emerald-500/90 font-medium transition-colors cursor-pointer"
+          >
+            <ShieldCheck size={13} className="text-emerald-400" />
+            <span>Protected by <strong>Aadhaar Data Vault</strong> (AES-256 + HSM Enclave)</span>
+          </button>
+          <span className="hidden sm:inline font-mono text-[10px] text-muted-foreground/75">
+            UIDAI Tokenized • 12-digit Aadhaar & 16-digit VID Supported
+          </span>
+        </div>
       )}
       {validationError && (
         <p className="mt-2 text-sm font-semibold text-destructive">{validationError}</p>

@@ -7,4 +7,6 @@ backend/firebase_credentials.json
 *.pem
 *.key
 backend/data/private/
+backend/app/vault/vault_storage.json
 .DS_Store
+

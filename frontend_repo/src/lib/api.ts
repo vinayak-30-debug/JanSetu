@@ -26,6 +26,9 @@ async function parseJsonSafe(res: Response): Promise<any> {
 export interface CitizenProfile {
   name: string;
   aadhaar_no: string;
+  uid_token?: string;
+  aadhaar_masked?: string;
+  id_type?: string;
   phone?: string;
   age: number;
   ration_card: string;
@@ -119,10 +122,24 @@ export const mockQueryResponse: QueryResponse = {
 };
 
 export async function fetchCitizenProfile(
-  aadhaarNo: string
+  identifier: string
 ): Promise<CitizenProfile> {
-  const res = await fetch(`${API_BASE}/citizen/by-aadhaar/${aadhaarNo}`);
-  if (!res.ok) throw new Error("Failed to fetch profile");
+  const cleaned = (identifier || "").trim().replace(/\s/g, "");
+  const payload = cleaned.startsWith("UIDT-")
+    ? { uid_token: cleaned }
+    : cleaned.length === 16
+    ? { vid: cleaned }
+    : { aadhaar_no: cleaned };
+
+  const res = await fetch(`${API_BASE}/citizen/lookup`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const errorData = await parseJsonSafe(res);
+    throw new Error(errorData?.detail || "Failed to fetch citizen profile");
+  }
   return res.json();
 }
 
@@ -278,14 +295,16 @@ export async function sendRegistrationOtp(phone: string): Promise<{ ok: boolean;
 
 export async function verifyRegistrationOtp(
   phone: string,
-  code: string
+  code: string,
+  aadhaar_no?: string,
+  consent?: boolean
 ): Promise<{ ok: boolean; phone: string; verified: boolean }> {
   let res: Response;
   try {
     res = await fetch(`${API_BASE}/auth/verify-otp`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone, code }),
+      body: JSON.stringify({ phone, code, aadhaar_no, consent }),
     });
   } catch {
     throw new Error(`Unable to reach server at ${API_BASE}. Start backend and retry.`);
@@ -293,4 +312,82 @@ export async function verifyRegistrationOtp(
   const data = await parseJsonSafe(res);
   if (!res.ok) throw new Error(data?.detail || "Failed to verify OTP");
   return data;
+}
+
+export interface VaultStatusResponse {
+  vault_status: string;
+  uidai_compliant: boolean;
+  zero_raw_aadhaar_guarantee: boolean;
+  encryption_cipher: string;
+  hsm: {
+    hsm_model: string;
+    hsm_status: string;
+    active_key_version: string;
+    total_key_versions: number;
+    rotation_count: number;
+    kek_fingerprint: string;
+    last_rotated_at: number;
+    uptime_seconds: number;
+  };
+  vault: {
+    total_vault_records: number;
+    active_key_version: string;
+    storage_backend: string;
+  };
+  audit: {
+    total_events_logged: number;
+    chain_integrity_valid: boolean;
+    chain_status_message: string;
+  };
+  supported_identifiers: Array<{ type: string; length: number; algorithm: string }>;
+}
+
+export interface PipelineSimulationResponse {
+  success: boolean;
+  total_latency_ms: number;
+  stages: Array<{
+    stage: string;
+    name: string;
+    status: string;
+    [key: string]: any;
+  }>;
+  final_output: {
+    uid_token: string;
+    masked_id: string;
+    id_type: string;
+    key_version: string;
+  };
+}
+
+export async function fetchVaultStatus(): Promise<VaultStatusResponse> {
+  const res = await fetch(`${API_BASE}/vault/status`);
+  if (!res.ok) throw new Error("Failed to fetch Aadhaar Data Vault status");
+  return res.json();
+}
+
+export async function simulateVaultPipeline(input: string): Promise<PipelineSimulationResponse> {
+  const res = await fetch(`${API_BASE}/vault/simulate-pipeline`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ input }),
+  });
+  if (!res.ok) {
+    const err = await parseJsonSafe(res);
+    throw new Error(err?.detail || "Pipeline simulation failed");
+  }
+  return res.json();
+}
+
+export async function rotateVaultKeys(): Promise<any> {
+  const res = await fetch(`${API_BASE}/vault/rotate-keys`, {
+    method: "POST",
+  });
+  if (!res.ok) throw new Error("Key rotation failed");
+  return res.json();
+}
+
+export async function fetchVaultAuditLogs(limit: number = 20): Promise<any> {
+  const res = await fetch(`${API_BASE}/vault/audit-logs?limit=${limit}`);
+  if (!res.ok) throw new Error("Failed to fetch vault audit logs");
+  return res.json();
 }

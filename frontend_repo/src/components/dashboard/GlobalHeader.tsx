@@ -1,6 +1,6 @@
 import { useBBN } from "@/context/BBNContext";
 import { JanSetuLogo } from "@/components/dashboard/JanSetuLogo";
-import { Globe } from "lucide-react";
+import { Globe, Shield, Lock } from "lucide-react";
 import { useI18n } from "@/hooks/use-i18n";
 import {
   Select,
@@ -46,7 +46,7 @@ const LANGUAGE_OPTIONS = [
 ];
 
 export function GlobalHeader() {
-  const { activeTab, setActiveTab, selectedLanguage, setSelectedLanguage, isAssistedMode } = useBBN();
+  const { activeTab, setActiveTab, selectedLanguage, setSelectedLanguage, isAssistedMode, openVaultModal } = useBBN();
   const { t } = useI18n();
 
   return (
@@ -91,6 +91,25 @@ export function GlobalHeader() {
       </nav>
 
       <div className="flex items-center gap-2">
+        <button
+          id="open-aadhaar-vault-btn"
+          onClick={openVaultModal}
+          className="flex items-center gap-2 rounded-2xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-200 px-3 py-1.5 shadow-[0_4px_16px_rgba(16,185,129,0.2)] transition-all group cursor-pointer"
+          title="Aadhaar Data Vault (UIDAI Compliant AES-256 + HSM)"
+        >
+          <div className="relative">
+            <Shield size={16} className="text-emerald-300 group-hover:scale-110 transition-transform" />
+            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+          </div>
+          <div className="hidden lg:flex flex-col text-left leading-tight">
+            <span className="text-[11px] font-bold text-white tracking-wide flex items-center gap-1">
+              Aadhaar Data Vault
+              <Lock size={10} className="text-emerald-300" />
+            </span>
+            <span className="text-[9px] text-emerald-300 font-mono">AES-256 • HSM Enclave</span>
+          </div>
+        </button>
+
         <div className="hidden sm:flex items-center gap-2 rounded-2xl bg-white/12 border border-white/25 backdrop-blur-md px-2.5 py-1.5 min-w-[235px] shadow-[0_8px_24px_rgba(0,0,0,0.12)]">
           <div className="w-7 h-7 rounded-xl bg-white/20 flex items-center justify-center">
             <Globe size={14} className="text-white" />

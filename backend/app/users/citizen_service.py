@@ -5,7 +5,8 @@ from pymongo.errors import PyMongoError
 from ..policies.models import UserProfile
 from ..database import get_database
 from ..auth.pii_crypto import decrypt_record
-from ..auth.security import fingerprint
+from ..auth.security import fingerprint, mask_aadhaar
+from ..vault.tokenization_service import tokenization_service
 
 
 class CitizenService:
@@ -16,44 +17,52 @@ class CitizenService:
         """
         Fetches a citizen profile from MongoDB and falls back to local JSON registry
         if DB is unavailable or record is missing.
+        Accepts raw Aadhaar (12 digits), Virtual ID (16 digits), or UID Token.
         """
         aadhaar_str = str(aadhaar_no).strip()
-        citizen_data = None
+        uid_token: Optional[str] = None
 
+        if aadhaar_str.startswith("UIDT-"):
+            uid_token = aadhaar_str
+        elif "".join(c for c in aadhaar_str if c.isdigit()):
+            try:
+                res = tokenization_service.tokenize(aadhaar_str)
+                uid_token = res.uid_token
+            except Exception:
+                pass
+
+        citizen_data = None
         db = get_database()
         if db is not None:
-            # Aadhaar may be stored as int or string depending on ingestion path.
-            # Production storage should use this keyed hash for lookup and keep all
-            # raw attributes inside encrypted_payload. Legacy plaintext support is
-            # retained only for the existing demo database.
-            query = {"Aadhaar_Hash": fingerprint(aadhaar_str)}
+            query_terms = []
+            if uid_token:
+                query_terms.append({"UID_Token": uid_token})
+            query_terms.append({"Aadhaar_Hash": fingerprint(aadhaar_str)})
             if aadhaar_str.isdigit():
-                query_terms = []
                 for variant in CitizenService._aadhaar_variants(aadhaar_str):
                     query_terms.append({"Aadhaar_No": variant})
                     try:
                         query_terms.append({"Aadhaar_No": int(variant)})
                     except ValueError:
                         pass
-                query = {"$or": query_terms}
+            query = {"$or": query_terms} if query_terms else {"Aadhaar_Hash": fingerprint(aadhaar_str)}
             try:
                 citizen_data = await db.citizens.find_one(query)
                 if citizen_data and citizen_data.get("encrypted_payload"):
                     citizen_data = decrypt_record(citizen_data["encrypted_payload"])
             except PyMongoError:
-                # Mongo might be down locally; fall back to bundled citizens.json.
                 citizen_data = None
 
         # Fallback to local dataset so dashboard works even before Mongo import.
         if not citizen_data:
-            citizen_data = CitizenService._find_in_local_registry(aadhaar_str)
+            citizen_data = CitizenService._find_in_local_registry(aadhaar_str, uid_token=uid_token)
 
         if not citizen_data:
             return None
 
         # Map registry fields to UserProfile
         docs = []
-        if citizen_data.get("Aadhaar_No"):
+        if citizen_data.get("Aadhaar_No") or citizen_data.get("UID_Token"):
             docs.append("Aadhar Card")
         if citizen_data.get("Voter_ID"):
             docs.append("Voter ID")
@@ -71,9 +80,14 @@ class CitizenService:
         monthly_income = monthly_income_raw if monthly_income_raw > 0 else round(annual_income_raw / 12, 2)
         annual_income = annual_income_raw if annual_income_raw > 0 else round(monthly_income * 12, 2)
 
+        resolved_uid_token = citizen_data.get("UID_Token") or uid_token
+        resolved_masked = citizen_data.get("Masked_Aadhaar") or mask_aadhaar(str(citizen_data.get("Aadhaar_No", "")))
+
         profile_dict = {
             "user_id": citizen_data.get("Citizen_ID"),
-            "aadhaar_no": str(citizen_data.get("Aadhaar_No", "")),
+            "uid_token": resolved_uid_token,
+            "aadhaar_no": resolved_masked,  # Zero raw Aadhaar guarantee: strictly masked
+            "aadhaar_masked": resolved_masked,
             "name": citizen_data.get("Full_Name"),
             "age": citizen_data.get("Age"),
             "income": annual_income,
@@ -141,13 +155,18 @@ class CitizenService:
         return bool(citizen.get("Aadhaar_Linked_Mobile")) and expected[-10:] == supplied
 
     @staticmethod
-    def _find_in_local_registry(aadhaar_no: str) -> Optional[Dict[str, Any]]:
+    def _find_in_local_registry(aadhaar_no: str, uid_token: Optional[str] = None) -> Optional[Dict[str, Any]]:
         if CitizenService._local_registry_by_aadhaar is None:
             CitizenService._local_registry_by_aadhaar = CitizenService._load_local_registry_index()
+
+        if uid_token and uid_token in CitizenService._local_registry_by_aadhaar:
+            return CitizenService._local_registry_by_aadhaar[uid_token]
 
         aadhaar_str = str(aadhaar_no).strip()
         if not aadhaar_str:
             return None
+        if aadhaar_str in CitizenService._local_registry_by_aadhaar:
+            return CitizenService._local_registry_by_aadhaar[aadhaar_str]
         for variant in CitizenService._aadhaar_variants(aadhaar_str):
             citizen = CitizenService._local_registry_by_aadhaar.get(variant)
             if citizen:
@@ -198,7 +217,11 @@ class CitizenService:
                     citizen = decrypt_record(citizen["encrypted_payload"])
                 except ValueError:
                     continue
-            key = str(citizen.get("Aadhaar_No", "")).strip()
-            if key:
-                index[key] = citizen
+            raw_aadhaar = str(citizen.get("Aadhaar_No", "")).strip()
+            if raw_aadhaar:
+                uid_token = tokenization_service._generate_uid_token(raw_aadhaar, "aadhaar")
+                citizen["UID_Token"] = uid_token
+                citizen["Masked_Aadhaar"] = mask_aadhaar(raw_aadhaar)
+                index[uid_token] = citizen
+                index[raw_aadhaar] = citizen
         return index

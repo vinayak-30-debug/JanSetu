@@ -1,7 +1,7 @@
 import {
   Home, FileText, ChevronDown, ChevronRight,
   HeartPulse, Heart, Landmark, GraduationCap,
-  Phone, Mail, HelpCircle, MessageCircle, ListChecks
+  Phone, Mail, HelpCircle, MessageCircle, ListChecks, Shield
 } from "lucide-react";
 import { useState } from "react";
 import { useBBN } from "@/context/BBNContext";
@@ -30,7 +30,8 @@ export function LeftSidebar() {
     llmMode,
     isLLMModeLoading,
     llmModeError,
-    updateLLMMode
+    updateLLMMode,
+    openVaultModal
   } = useBBN();
   const { t } = useI18n();
 
@@ -216,6 +217,22 @@ export function LeftSidebar() {
           <HelpCircle size={isAssistedMode ? 22 : 18} />
           {t("get_help", "Get Help")}
           <ChevronRight size={16} />
+        </button>
+      </div>
+
+      <div className="px-4 pb-2">
+        <button
+          id="sidebar-aadhaar-vault-btn"
+          onClick={openVaultModal}
+          className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-emerald-950/40 hover:bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 text-xs font-semibold transition-all group cursor-pointer"
+        >
+          <span className="flex items-center gap-2">
+            <Shield size={14} className="text-emerald-400 group-hover:scale-110 transition-transform" />
+            <span>Aadhaar Data Vault</span>
+          </span>
+          <span className="text-[10px] bg-emerald-500/20 px-1.5 py-0.5 rounded text-emerald-300 font-mono">
+            ACTIVE
+          </span>
         </button>
       </div>
 

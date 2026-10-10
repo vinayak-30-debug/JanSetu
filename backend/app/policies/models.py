@@ -4,7 +4,10 @@ from datetime import datetime
 
 class UserProfile(BaseModel):
     user_id: str
+    uid_token: Optional[str] = None
     aadhaar_no: Optional[str] = None
+    aadhaar_masked: Optional[str] = None
+    vid_masked: Optional[str] = None
     name: str = ""
     email: Optional[EmailStr] = None
     phone: Optional[str] = None
