@@ -125,7 +125,13 @@ export function HeroSection({ showSearch = true }: HeroSectionProps) {
 
       {showSearch && (
         <form onSubmit={handleSearch} className="relative max-w-xl">
-          <Search size={18} className={`absolute left-4 top-1/2 -translate-y-1/2 ${isLoading ? "animate-pulse text-primary" : "text-muted-foreground"}`} />
+          {isLoading ? (
+            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px]">
+              <div className="w-full h-full rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+            </div>
+          ) : (
+            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          )}
           <input
             type="text"
             placeholder={isListening ? "Listening..." : t("hero_placeholder", "Enter Aadhaar or ask with occupation and state...")}
@@ -135,12 +141,13 @@ export function HeroSection({ showSearch = true }: HeroSectionProps) {
               if (validationError) setValidationError("");
             }}
             disabled={isLoading || isListening}
-            className={`w-full pl-11 pr-12 py-3 rounded-xl bg-card border border-border text-[14px] font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 shadow-card transition-all ${isListening ? "ring-2 ring-primary/50 bg-primary/5" : ""}`}
+            className={`w-full pl-11 pr-12 py-3 rounded-xl bg-card border border-border text-[14px] font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 shadow-card transition-all ${isListening ? "ring-2 ring-primary/50 bg-primary/5" : ""} ${isLoading ? "opacity-60 cursor-not-allowed" : ""}`}
           />
           <button
             type="button"
             onClick={startListening}
-            className={`absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all ${isListening ? "bg-primary text-white scale-110 animate-pulse" : "hover:bg-muted text-primary"}`}
+            disabled={isLoading}
+            className={`absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all ${isListening ? "bg-primary text-white scale-110 animate-pulse" : "hover:bg-muted text-primary"} ${isLoading ? "opacity-40 cursor-not-allowed" : ""}`}
           >
             <Mic size={18} />
           </button>

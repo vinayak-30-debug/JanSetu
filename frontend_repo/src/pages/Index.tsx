@@ -16,10 +16,17 @@ import { ApplyNowPage } from "@/components/dashboard/ApplyNowPage";
 import { RTAPanel } from "@/components/dashboard/RTAPanel";
 import { AllSchemesPanel } from "@/components/dashboard/AllSchemesPanel";
 import { AadhaarDataVaultModal } from "@/components/dashboard/AadhaarDataVaultModal";
+import {
+  EligibilityOverviewSkeleton,
+  RecommendedSchemesSkeleton,
+  SimulatorGaugeSkeleton,
+  RequiredDocumentsSkeleton,
+  LoadingOverlay,
+} from "@/components/dashboard/SkeletonLoader";
 import { useBBN } from "@/context/BBNContext";
 
 const Index = () => {
-  const { activeTab, userProfile, runQuery, isApplying, closeSchemeDetails } = useBBN();
+  const { activeTab, userProfile, runQuery, isApplying, closeSchemeDetails, isLoading } = useBBN();
 
   useEffect(() => {
     closeSchemeDetails();
@@ -31,14 +38,14 @@ const Index = () => {
   const renderDashboardLayout = () => (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-2 space-y-6">
-        <EligibilityOverview />
-        <RecommendedSchemes />
+        {isLoading ? <EligibilityOverviewSkeleton /> : <EligibilityOverview />}
+        {isLoading ? <RecommendedSchemesSkeleton /> : <RecommendedSchemes />}
       </div>
 
       <aside className="space-y-6">
-        <SimulatorGauge />
+        {isLoading ? <SimulatorGaugeSkeleton /> : <SimulatorGauge />}
         <RTAPanel />
-        <RequiredDocuments />
+        {isLoading ? <RequiredDocumentsSkeleton /> : <RequiredDocuments />}
       </aside>
     </div>
   );
@@ -78,6 +85,11 @@ const Index = () => {
         </main>
       </div>
 
+      {/* Full-page loading overlay for Aadhaar / profile lookups */}
+      {isLoading && !userProfile && (
+        <LoadingOverlay message="Looking up your profile…" />
+      )}
+
       <SchemeDetailsModal />
       <ProfileCompletionModal />
       <AadhaarDataVaultModal />
@@ -87,4 +99,3 @@ const Index = () => {
 };
 
 export default Index;
-

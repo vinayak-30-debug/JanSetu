@@ -114,7 +114,10 @@ export function EligibilityOverview() {
           )}
 
           <div className="w-full h-2 bg-border rounded-full overflow-hidden mt-3">
-            <div className="h-full rounded-full gradient-primary progress-fill progress-smooth" style={{ width: `${(eligible_policies / 10) * 100}%` }} />
+            <div
+              className="h-full rounded-full gradient-primary progress-fill progress-smooth"
+              style={{ width: `${Math.min(100, (eligible_policies / Math.max(1, (queryResponse?.eligible_schemes?.length ?? 0) + (queryResponse?.not_eligible_schemes?.length ?? 0) || 10)) * 100)}%` }}
+            />
           </div>
         </div>
 

@@ -19,7 +19,7 @@ export function RTAPanel() {
                         RTA: Reasoning Core
                     </h3>
                     <div className="flex items-center gap-1">
-                        <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary pulse-live" />
                         <span className="text-[10px] font-bold text-primary uppercase tracking-tighter">Live Analysis</span>
                     </div>
                 </div>
